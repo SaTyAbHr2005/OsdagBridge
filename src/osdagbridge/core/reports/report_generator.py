@@ -182,8 +182,6 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \usepackage{multirow}
 \usepackage{colortbl}
 \usepackage{longtable}
-\setlength{\LTleft}{\fill}
-\setlength{\LTright}{\fill}
 \usepackage{titlesec}
 \usepackage{titletoc}
 \usepackage{lastpage}

@@ -35,10 +35,9 @@ class Palette:
 
 @dataclass(frozen=True)
 class TableStyle:
-    # Column gaps, widest first: wide multi-column tables use compact,
-    # the BOM and standards tables tight, the analysis summary dense.
-    col_sep: str = "6pt"
-    col_sep_compact: str = "4pt"
+    # Column gaps, widest first. Most tables use the default; the BOM and
+    # standards tables use tight and the nine-column analysis summary dense.
+    col_sep: str = "4pt"
     col_sep_tight: str = "3.5pt"
     col_sep_dense: str = "3pt"
     array_stretch: float = 1.12
@@ -98,6 +97,8 @@ def latex_definitions() -> str:
 
 \setlength{{\tabcolsep}}{{{t.col_sep}}}
 \renewcommand{{\arraystretch}}{{{t.array_stretch}}}
+\setlength{{\LTleft}}{{\fill}}
+\setlength{{\LTright}}{{\fill}}
 \setlength{{\LTpre}}{{{t.longtable_pre}}}
 \setlength{{\LTpost}}{{{t.longtable_post}}}
 \setlength{{\arrayrulewidth}}{{{t.rule_width}}}
@@ -106,7 +107,6 @@ def latex_definitions() -> str:
 \newlength{{\rowpad}}\setlength{{\rowpad}}{{{t.row_pad}}}
 \newlength{{\rowpadwide}}\setlength{{\rowpadwide}}{{{t.row_pad_wide}}}
 \newlength{{\tablegap}}\setlength{{\tablegap}}{{{t.block_gap}}}
-\newlength{{\colsepcompact}}\setlength{{\colsepcompact}}{{{t.col_sep_compact}}}
 \newlength{{\colseptight}}\setlength{{\colseptight}}{{{t.col_sep_tight}}}
 \newlength{{\colsepdense}}\setlength{{\colsepdense}}{{{t.col_sep_dense}}}
 \newcommand{{\densearraystretch}}{{{t.array_stretch_dense}}}

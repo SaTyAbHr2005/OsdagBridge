@@ -1202,9 +1202,6 @@ This section presents all structural design checks performed by OsdagBridge. For
 
 \vspace{\tablegap}
 
-\setlength\LTleft{0pt}
-\setlength\LTright{\fill}
-
 \begin{longtable}{|L{3.2cm}|>{\centering\arraybackslash}p{4.3cm}|>{\centering\arraybackslash}p{4.3cm}|C{2.0cm}|}
 \caption{\textbf{Shear Connector Spacing}}
 \hline
@@ -1408,9 +1405,6 @@ Cross bracing between adjacent plate girders provides lateral stability during c
 
 \vspace{0.4em}
 \noindent
-\setlength{\tabcolsep}{\colsepcompact}
-\setlength\LTleft{0pt}
-\setlength\LTright{\fill}
 
 \begin{longtable}{|C{2.0cm}|L{2.0cm}|L{2.2cm}|C{2.5cm}|C{2.0cm}|C{2.0cm}|}
 \caption{\textbf{Cross Bracing --- Connection and Section Properties}}
@@ -1452,9 +1446,6 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 
 \vspace{0.4em}
 \noindent
-\setlength{\tabcolsep}{\colsepcompact}
-\setlength{\LTleft}{0pt}
-\setlength{\LTright}{\fill}
 
 \begin{longtable}{|C{2.0cm}|L{2.0cm}|L{2.2cm}|C{2.5cm}|C{2.0cm}|C{2.0cm}|}
 \caption{\textbf{End Diaphragm --- Connection and Section Properties}}
