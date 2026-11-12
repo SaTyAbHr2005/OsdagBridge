@@ -44,7 +44,6 @@ class TableStyle:
     array_stretch_dense: float = 1.25
     row_pad: str = "6pt"
     row_pad_wide: str = "8pt"
-    block_gap: str = "1em"
     rule_width: str = "0.5pt"
     extra_row_height: str = "0.6pt"
     # Space above and below every longtable; the caption already separates
@@ -54,6 +53,14 @@ class TableStyle:
     # A table starting with fewer lines than this left on the page moves to
     # the next page instead of leaving its caption or first row stranded.
     min_lines_before_break: int = 5
+
+
+@dataclass(frozen=True)
+class SpacingScale:
+    # Vertical gaps between blocks of content, smallest first.
+    small: str = "0.4em"    # a heading or note directly attached to a table
+    block: str = "1em"      # paragraph or table followed by another table
+    section: str = "2em"    # start of a new group within a section
 
 
 @dataclass(frozen=True)
@@ -67,6 +74,7 @@ class HeaderFooterStyle:
 PAGE = PageStyle()
 COLORS = Palette()
 TABLE = TableStyle()
+SPACING = SpacingScale()
 HEADER_FOOTER = HeaderFooterStyle()
 
 
@@ -106,7 +114,9 @@ def latex_definitions() -> str:
 
 \newlength{{\rowpad}}\setlength{{\rowpad}}{{{t.row_pad}}}
 \newlength{{\rowpadwide}}\setlength{{\rowpadwide}}{{{t.row_pad_wide}}}
-\newlength{{\tablegap}}\setlength{{\tablegap}}{{{t.block_gap}}}
+\newlength{{\gapsmall}}\setlength{{\gapsmall}}{{{SPACING.small}}}
+\newlength{{\tablegap}}\setlength{{\tablegap}}{{{SPACING.block}}}
+\newlength{{\sectiongap}}\setlength{{\sectiongap}}{{{SPACING.section}}}
 \newlength{{\colseptight}}\setlength{{\colseptight}}{{{t.col_sep_tight}}}
 \newlength{{\colsepdense}}\setlength{{\colsepdense}}{{{t.col_sep_dense}}}
 \newcommand{{\densearraystretch}}{{{t.array_stretch_dense}}}

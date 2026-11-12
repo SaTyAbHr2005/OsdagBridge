@@ -1180,7 +1180,6 @@ This section presents all structural design checks performed by OsdagBridge. For
 \noindent\textit{Note: IRC 22 Cl. 605 --- governing of normal and shear fatigue (worst by DCR). Capacity reduction factor $\mu_r$ applied where plate thickness > 25 mm.}
 
 \vspace{\tablegap}
-\vspace{0.4em}
 \begin{longtable}{|C{1.6cm}|>{\centering\arraybackslash}p{3.6cm}|C{2.4cm}|C{2.0cm}|C{2.1cm}|C{1.7cm}|C{1.5cm}|}
 \caption{\textbf{Girder Design Summary (DCR / Utilization Ratio)}}
 \hline
@@ -1402,10 +1401,6 @@ Clear Cover (IRC 112 Cl. 15.2) & $\geq$ """ + _dkf(KEY_DD_MIN_COVER, nd=0) + r""
 Cross bracing between adjacent plate girders provides lateral stability during construction, resists transverse loads (wind, seismic, braking) in service, and prevents lateral torsional buckling of the girders. Members are designed per IS~800:2007 Cl.~7 (compression) and Cl.~6 (tension). Forces are derived from the grillage model under the governing load combination  (DL + LL + WL).
 
 \vspace{\tablegap}
-
-\vspace{0.4em}
-\noindent
-
 \begin{longtable}{|C{2.0cm}|L{2.0cm}|L{2.2cm}|C{2.5cm}|C{2.0cm}|C{2.0cm}|}
 \caption{\textbf{Cross Bracing --- Connection and Section Properties}}
 \hline
@@ -1443,10 +1438,6 @@ Cross bracing between adjacent plate girders provides lateral stability during c
 End diaphragms at the supports transfer transverse loads to the bearings, restrain the bottom flanges against lateral displacement, and maintain the girder cross-section geometry during construction and in service. They are designed per IS~800:2007 and IRC~24:2010 Cl.~507.
 
 \vspace{\tablegap}
-
-\vspace{0.4em}
-\noindent
-
 \begin{longtable}{|C{2.0cm}|L{2.0cm}|L{2.2cm}|C{2.5cm}|C{2.0cm}|C{2.0cm}|}
 \caption{\textbf{End Diaphragm --- Connection and Section Properties}}
 \hline
