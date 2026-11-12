@@ -55,11 +55,9 @@ class TableStyle:
     longtable_post: str = "6pt"
     # A float table starting with fewer lines than this left on the page
     # moves to the next page instead of leaving its caption stranded.
-    # Longtables are deliberately left out: longtable already moves to a new
-    # page when its caption, header, foot and first row do not fit, and the
-    # extra break point from \needspace let TeX break just before the table
-    # after longtable had taken over the page, which left a lone "Continued"
-    # foot behind and printed the first header under the repeated one.
+    # Longtables handle their own start-of-table page break; a \needspace
+    # before them adds a break point that can separate the table from its
+    # first page and strand the "Continued" foot.
     min_lines_before_table: int = 5
     # Labels on tables that break across pages.
     continued_caption: str = "(continued)"
@@ -139,7 +137,7 @@ TITLE_PAGE = TitlePageStyle()
 HEADER_FOOTER = HeaderFooterStyle()
 
 
-_PAPER_WIDTH_CM = {"a4paper": 21.0}
+_PAPER_WIDTH_CM = {"a4paper": 21.0, "a3paper": 29.7, "letterpaper": 21.59, "legalpaper": 21.59}
 _UNIT_CM = {"cm": 1.0, "mm": 0.1, "in": 2.54, "pt": 2.54 / 72.27}
 
 
@@ -153,6 +151,8 @@ def length_cm(value: str) -> float:
 
 def text_width_cm() -> float:
     """Width of the text block, i.e. the widest a table may be."""
+    if PAGE.paper not in _PAPER_WIDTH_CM:
+        raise ValueError(f"No paper width defined for {PAGE.paper!r}; add it to _PAPER_WIDTH_CM")
     return (_PAPER_WIDTH_CM[PAGE.paper]
             - length_cm(PAGE.margin_left) - length_cm(PAGE.margin_right))
 

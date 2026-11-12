@@ -33,7 +33,8 @@ def fit_to_text_width(spec: str, col_sep: str = TABLE.col_sep) -> str:
 
     The available width is the text width less the column padding
     (``col_sep`` on both sides of every column) and the vertical rules.
-    Specs that already fit are returned unchanged.
+    Specs that already fit are returned unchanged. Only widths given in cm
+    are scaled; columns sized any other way keep their natural width.
     """
     widths = [float(w) for _, w in _WIDTH.findall(spec)]
     if not widths:
