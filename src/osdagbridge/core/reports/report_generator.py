@@ -227,12 +227,12 @@ def title_page(m, osdag_logo, org_logo):
         rhs = r''
 
     logos_tex = r"""\noindent
-\begin{minipage}[c]{0.6\textwidth}
+\begin{minipage}[c]{""" + tp.osdag_logo_width + r"""}
 \raggedright
 """ + lhs + r"""
 \end{minipage}%
 \hfill
-\begin{minipage}[c]{0.35\textwidth}
+\begin{minipage}[c]{""" + tp.org_logo_width + r"""}
 \raggedleft
 """ + rhs + r"""
 \end{minipage}

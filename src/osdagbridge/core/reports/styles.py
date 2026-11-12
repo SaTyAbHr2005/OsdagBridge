@@ -64,6 +64,21 @@ class SpacingScale:
 
 
 @dataclass(frozen=True)
+class FigureStyle:
+    plot_width: str = r"0.75\textwidth"        # analysis plots (Chapter 4)
+    summary_width: str = r"0.9\textwidth"      # executive summary views
+    drawing_width: str = r"0.85\textwidth"     # single drawings (Chapter 6)
+    grid_cell_width: str = r"0.31\textwidth"   # three drawings side by side
+    placeholder_width: str = r"0.97\textwidth"
+    gap_before_drawing: str = "4pt"
+    # Plots carry their own whitespace margin, so the gaps around them are
+    # pulled in slightly to keep plot and caption visually together.
+    plot_gap_outer: str = "-0.5em"
+    plot_gap_caption: str = "0.5em"
+    plot_caption_size: str = r"\small"
+
+
+@dataclass(frozen=True)
 class Typography:
     chapter_title: str = r"\Large\bfseries"
     chapter_title_after: str = "10pt"
@@ -82,6 +97,8 @@ class TitlePageStyle:
     document_type_size: str = r"\Large"
     block_gap: str = "1.5cm"
     logo_gap: str = "1cm"
+    osdag_logo_width: str = r"0.6\textwidth"
+    org_logo_width: str = r"0.35\textwidth"
     org_logo_height: str = "2.2cm"
     label_width: str = "4cm"
     value_width: str = "10cm"
@@ -99,6 +116,7 @@ PAGE = PageStyle()
 COLORS = Palette()
 TABLE = TableStyle()
 SPACING = SpacingScale()
+FIGURE = FigureStyle()
 TYPOGRAPHY = Typography()
 TITLE_PAGE = TitlePageStyle()
 HEADER_FOOTER = HeaderFooterStyle()
