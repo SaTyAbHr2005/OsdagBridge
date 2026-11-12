@@ -59,7 +59,7 @@ class TableStyle:
     # least one row; with less, longtable sets only the foot on that page
     # and the first header lands under the repeated one on the next page.
     min_lines_before_table: int = 5
-    min_lines_before_longtable: int = 10
+    min_lines_before_longtable: int = 7
     # Labels on tables that break across pages.
     continued_caption: str = "(continued)"
     continued_note: str = r"\small\itshape Continued on next page"
