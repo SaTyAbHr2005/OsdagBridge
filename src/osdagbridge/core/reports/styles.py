@@ -27,6 +27,9 @@ class PageStyle:
 class Palette:
     # HTML hex values without the leading '#', as expected by xcolor.
     brand: str = "91B014"
+    # 15% tint of the brand green: marks header rows without competing
+    # with the PASS/FAIL colours in the table body.
+    table_header: str = "EEF3DC"
     status_pass: str = "000000"
     status_fail: str = "FF0000"
     log_warning: str = "0000FF"
@@ -144,6 +147,8 @@ def latex_definitions() -> str:
 \definecolor{{statusFail}}{{HTML}}{{{c.status_fail}}}
 \definecolor{{logWarning}}{{HTML}}{{{c.log_warning}}}
 \definecolor{{logError}}{{HTML}}{{{c.log_error}}}
+\definecolor{{tableHeader}}{{HTML}}{{{c.table_header}}}
+\newcommand{{\tableheader}}{{\rowcolor{{tableHeader}}}}
 \newcommand{{\statuspass}}[1]{{\textcolor{{statusPass}}{{#1}}}}
 \newcommand{{\statusfail}}[1]{{\textcolor{{statusFail}}{{#1}}}}
 

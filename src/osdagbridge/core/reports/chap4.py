@@ -99,12 +99,13 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 
 \caption{\textbf{Summary of Maximum Demands}}\\
 \hline
-\multirow{2}{*}{\makecell{\textbf{Load}\\\textbf{Case/}\\\textbf{Comb.}}}
+\tableheader
 & \multicolumn{3}{c|}{\textbf{Bending Moment}}
 & \multicolumn{3}{c|}{\textbf{Shear Force}}
 & \multicolumn{2}{c|}{\textbf{Reaction at Supports}}\\
 \cline{2-9}
 
+\tableheader \multirow{-2}{*}{\makecell{\textbf{Load}\\\textbf{Case/}\\\textbf{Comb.}}}
 & \makecell{\textbf{Max}\\\textbf{(kNm)}}
 & \textbf{Girder}
 & \makecell{\textbf{Loc.}\\\textbf{(m)}}
@@ -117,12 +118,13 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \endfirsthead
 
 \hline
-\multirow{2}{*}{\makecell{\textbf{Load}\\\textbf{Case/}\\\textbf{Comb.}}}
+\tableheader
 & \multicolumn{3}{c|}{\textbf{Bending Moment}}
 & \multicolumn{3}{c|}{\textbf{Shear Force}}
 & \multicolumn{2}{c|}{\textbf{Reaction at Supports}}\\
 \cline{2-9}
 
+\tableheader \multirow{-2}{*}{\makecell{\textbf{Load}\\\textbf{Case/}\\\textbf{Comb.}}}
 & \makecell{\textbf{Max}\\\textbf{(kNm)}}
 & \textbf{Girder}
 & \makecell{\textbf{Loc.}\\\textbf{(m)}}
@@ -144,7 +146,7 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \begin{longtable}{|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|}
 \caption{\textbf{Reactions at Supports}}
 \hline
-\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\[\rowpad]
+\tableheader \textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\[\rowpad]
 \hline
  & """ + '' + r""" & """ + '' + r""" \\[\rowpad]
 \hline
@@ -158,7 +160,7 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \begin{longtable}{|L{7cm}|p{8.5cm}|}
 \caption{\textbf{Deflection Summary (Live Load \& Total Load)}}
 \hline
-\textbf{parameter} & \textbf{value} \\
+\tableheader \textbf{parameter} & \textbf{value} \\
 \hline
 \textnormal{Deflection due to Live Load, $\delta_{LL}$} & """ + _live_str + r""" \\[\rowpad]
 \hline

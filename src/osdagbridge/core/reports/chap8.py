@@ -61,7 +61,7 @@ form the basis of all design calculations in this software.
 \caption{\textbf{IRC Codes}}
 \begin{tabular}{|c|c|p{13cm}|}
 \hline
-\textbf{Code} & \textbf{Year} & \textbf{Title / Scope} \\ 
+\tableheader \textbf{Code} & \textbf{Year} & \textbf{Title / Scope} \\ 
 \hline
 IRC 5 & 2015 & General Features of Design - carriageway widths, kerb, footpath dimensions \\ 
 \hline
@@ -84,7 +84,7 @@ IRC SP 114 & 2018 & Seismic Design of Road Bridges \\
 \caption{\textbf{IS Codes}}
 \begin{tabular}{|c|c|p{13cm}|}
 \hline
-\textbf{Code} & \textbf{Year} & \textbf{Scope} \\
+\tableheader \textbf{Code} & \textbf{Year} & \textbf{Scope} \\
 \hline
 IS 800 & 2007 & Steel construction - tension, compression, bending, shear, LTB, stiffeners, combined checks \\
 \hline

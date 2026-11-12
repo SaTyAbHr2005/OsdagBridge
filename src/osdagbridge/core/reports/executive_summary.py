@@ -146,7 +146,7 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
 
     # Header row
     hdr_cells = ' &\n  '.join([r'\textbf{' + _tex(lbl) + '}' for lbl, _ in labels])
-    header_row = r'  \textbf{} &' + '\n  ' + hdr_cells + r' \\' + '\n'
+    header_row = r'  \tableheader \textbf{} &' + '\n  ' + hdr_cells + r' \\' + '\n'
 
     # Member ID row
     mid_cells = ' & '.join([_tex(mid) for _, mid in labels])

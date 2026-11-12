@@ -275,7 +275,7 @@ This section summarizes all loads applied to the bridge and the load combination
 \begin{longtable}{|L{5.5cm}|p{10.0cm}|}
 \caption{\textbf{Dead Load -- Self Weight}}
 \hline
-\textbf{parameter} & \textbf{value} \\
+\tableheader \textbf{parameter} & \textbf{value} \\
 \hline
 \textnormal{Steel Self-Weight Applied} & """ + (_render_value(input_dict, KEY_MATERIAL_GIRDER_DENSITY, ' kN/m\\textsuperscript{3}')) + r""" \\[\rowpad]
 \hline
@@ -289,7 +289,7 @@ This section summarizes all loads applied to the bridge and the load combination
 \begin{longtable}{|L{5.5cm}|p{10.0cm}|}
 \caption{\textbf{Dead Load for Surfacing (DW)}}
 \hline
-\textbf{parameter} & \textbf{value} \\
+\tableheader \textbf{parameter} & \textbf{value} \\
 \hline
 \textnormal{Wearing Course Load} & """ + (_render_value(input_dict, KEY_WC_MATERIAL)) + r""" x """ + (_render_value(input_dict, KEY_WC_THICKNESS)) + r""" \\[\rowpad]
 \hline
@@ -303,7 +303,7 @@ This section summarizes all loads applied to the bridge and the load combination
 \begin{longtable}{|L{5.5cm}|p{10.0cm}|}
 \caption{\textbf{Live Loads (LL)}}
 \hline
-\textbf{parameter} & \textbf{value} \\
+\tableheader \textbf{parameter} & \textbf{value} \\
 \hline
 \textnormal{Vehicles Considered} & """ + _tex(vehicles_str) + r""" \\[\rowpad]
 \hline
@@ -319,7 +319,7 @@ This section summarizes all loads applied to the bridge and the load combination
 \begin{longtable}{|L{5.5cm}|p{10.0cm}|}
 \caption{\textbf{Wind Load (WL) --- per IRC 6}}
 \hline
-\textbf{parameter} & \textbf{value} \\
+\tableheader \textbf{parameter} & \textbf{value} \\
 \hline
 \textnormal{Basic Wind Speed, Vb} & """ + (_render_value(input_dict,'wind_speed', ' m/s')) + r""" [from Project Location] \\[\rowpad]
 \hline
@@ -343,7 +343,7 @@ This section summarizes all loads applied to the bridge and the load combination
 \begin{longtable}{|L{5.5cm}|p{10.0cm}|}
 \caption{\textbf{Earthquake Load (EL) --- per IRC 6}}
 \hline
-\textbf{parameter} & \textbf{value} \\
+\tableheader \textbf{parameter} & \textbf{value} \\
 \hline
 \textnormal{Seismic Zone} & """ + (_render_value(input_dict,'seismic_zone')) + r""" [from Project Location] \\[\rowpad]
 \hline
@@ -369,7 +369,7 @@ This section summarizes all loads applied to the bridge and the load combination
 \begin{longtable}{|L{5.5cm}|p{10.0cm}|}
 \caption{\textbf{Temperature Load (TL) --- per IRC 6}}
 \hline
-\textbf{parameter} & \textbf{value} \\
+\tableheader \textbf{parameter} & \textbf{value} \\
 \hline
 \textnormal{Maximum Shade Temperature} & """ + (_render_value(input_dict,'shade_temp_max')) + r""" $^\circ$C \\[\rowpad]
 \hline
@@ -385,7 +385,7 @@ This section summarizes all loads applied to the bridge and the load combination
 \begin{longtable}{|C{4.0cm}|p{11.5cm}|}
 \caption{\textbf{Load Combinations}}
 \hline
-\textbf{Combination ID} & \textbf{Load Cases} \\[\rowpad]
+\tableheader \textbf{Combination ID} & \textbf{Load Cases} \\[\rowpad]
 \hline
 """ + lc_rows_str + r"""
 \end{longtable}
