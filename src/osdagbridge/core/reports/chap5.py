@@ -1106,9 +1106,7 @@ This section presents all structural design checks performed by OsdagBridge. For
 \noindent\textit{Note: IRC 22 Cl. 603.3.3.1, IS 800 Cl. 8.2.2}
 
 \vspace{\tablegap}
-\begin{longtable}{|C{2.5cm}|L{6.5cm}|>{\arraybackslash}p{6.5cm}|}
-\caption{\textbf{Stiffener Design Summary}}
-\hline
+""" + longtable_begin(r"""|C{2.5cm}|L{6.5cm}|>{\arraybackslash}p{6.5cm}|""", r"""\tableheader \textbf{Girder} & \textbf{Parameter} & \textbf{Value} \\[\rowpad]""", caption=r"""Stiffener Design Summary""") + r"""
 """ + t57_content + r"""
 \end{longtable}
 """ + t58_block + r"""
@@ -1169,9 +1167,7 @@ This section presents all structural design checks performed by OsdagBridge. For
 The reinforced concrete deck slab is designed per IRC~112:2011 (flexure, shear, crack width) and IRC~22:2014 (composite construction). Wheel loads are distributed using Pigeaud's method. The deck is checked for flexure in the transverse and longitudinal directions, punching shear, one-way (beam) shear, crack width, and reinforcement detailing.
 
 \vspace{\tablegap}
-\begin{longtable}{|L{5.5cm}|p{10.0cm}|}
-\caption{\textbf{Deck Slab --- Loading and Geometry}}
-\hline
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\[\rowpad]""", caption=r"""Deck Slab --- Loading and Geometry""") + r"""
 \textnormal{Effective Span of Deck Slab, $l_{eff}$} & """ + _dkf(KEY_DD_SPAN, nd=0, scale=1000.0) + r""" mm (girder spacing, c/c) \\[\rowpad]
 \hline
 \textnormal{Deck Thickness, $t_s$} & """ + _render_value(bridge.input_dict, KEY_TS_DECK_THICKNESS) + r""" mm \\[\rowpad]

@@ -350,13 +350,13 @@ def _bracing_tables(input_dict, n_girders):
     return (r"""
 \newpage
 
-""" + longtable_begin(r"""|L{2.2cm}|L{2.2cm}|L{3.0cm}|L{2.5cm}|C{1.8cm}|C{1.8cm}|""", r"""\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} & \textbf{Spacing (m)} \\""", caption=r"""Member Properties: Cross Bracing Details""") + r"""
+""" + longtable_begin(r"""|L{2.6cm}|L{3.0cm}|L{3.4cm}|L{3.4cm}|C{2.2cm}|""", r"""\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} & \textbf{Spacing (m)} \\""", caption=r"""Member Properties: Cross Bracing Details""") + r"""
 """
 + cb_rows
 + r"""\end{longtable}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|L{2.2cm}|L{2.2cm}|L{3.0cm}|L{2.5cm}|C{1.8cm}|C{1.8cm}|""", r"""\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} \\""", caption=r"""Member Properties: End Diaphragm Details""") + r"""
+""" + longtable_begin(r"""|L{3.0cm}|L{3.4cm}|L{4.2cm}|L{4.0cm}|""", r"""\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} \\""", caption=r"""Member Properties: End Diaphragm Details""") + r"""
 """
 + ed_rows
 + r"""\end{longtable}
