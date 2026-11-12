@@ -687,115 +687,151 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
                   _defl_status(_edge_req, _edge)) + "\n\\hline"
     )
 
-    # Generate Table 5.20(a) rows
-    cb_forces_rows = []
-    pairs = bridge.get_cb_pairs()
+    def _bracing_rows(data, prop_root, diagonal_group, chords_enabled):
+        """Rows for the connection, slenderness and capacity tables of one bracing system.
 
-    if not pairs:
-        # fallback: one placeholder row
-        cb_forces_rows.append(
-            r"""Between Girders & Diagonal &  &  &  &  \\[\rowpad]
-\hline"""
-        )
-    else:
-        for pair in pairs:
-            pair_id = pair.replace("-", "")
-            for member, label in [("diagonal", "Diagonal"),
-                                ("chord", "Top / Bottom chord")]:
-                force_str, ftype = bridge.get_cb_governing_force(pair, member)
-                conn_type = bridge.get_cb_connection(pair, member, ftype)
-                section  = bridge.get_cb_section(pair, member, ftype)
+        data            ReportDataBridge, or its end diaphragm view
+        prop_root       output_dict prefix of the section properties
+        diagonal_group  property group of the diagonals ('bracing' or 'end_diaphragm')
+        chords_enabled  callable(pair) -> (top chord present, bottom chord present)
+        """
+        # Generate Table 5.20(a) rows
+        cb_forces_rows = []
+        pairs = data.get_cb_pairs()
 
-                # Fetch properties from output_dict
-                if member == "diagonal":
-                    pfx = f"transverse_member_design.cb.section_properties.bracing.{pair_id}"
-                else:
-                    pfx = f"transverse_member_design.cb.section_properties.bottom_chord.{pair_id}"
-                    if bridge.output_dict.get(f"{pfx}.A") is None:
-                        pfx = f"transverse_member_design.cb.section_properties.top_chord.{pair_id}"
-
-                area_cm2 = bridge.output_dict.get(f"{pfx}.A")
-                rv_cm = bridge.output_dict.get(f"{pfx}.rv")
-
-                # Convert Area: cm² -> mm²
-                area_str = f"{float(area_cm2) * 100:.1f}" if area_cm2 is not None else ""
-                # Convert rv: cm -> mm
-                rmin_str = f"{float(rv_cm) * 10:.1f}" if rv_cm is not None else ""
-                cb_forces_rows.append(
-                    r"\multirow{2}{*}{\makecell{" + _tex(pair) + r"}} & "
-                    + label + r" & " + conn_type + r" & " + section
-                    + r" & " + area_str + r" & " + rmin_str
-                    + r" \\[\rowpad]\cline{2-6}"
-                )
-            cb_forces_rows.append(r"\hline")
-    cb_forces_content = "\n".join(cb_forces_rows)
-
-    # Generate Table 5.20(b) rows
-    def get_status_str(slnd_str, limit):
-        try:
-            v = float(slnd_str)
-            return r"\statuspass{PASS}" if v <= limit else r"\statusfail{FAIL}"
-        except (ValueError, TypeError):
-            return ""
-    cb_slenderness_rows = []
-    if not pairs:
-        cb_slenderness_rows.append(
-            r"""Between Girders & Diagonal & C &  &  &  ---  \\[\rowpad]
-\hline"""
-        )
-    else:
-        for pair in pairs:
-            kl_diag = bridge.get_cb_effective_length("diagonal")
-            slnd_diag = bridge.get_cb_slenderness(pair, "diagonal")
-            status_diag = get_status_str(slnd_diag, 250)
-            
-            kl_tc = bridge.get_cb_effective_length("chord")
-            slnd_tc = bridge.get_cb_slenderness(pair, "chord")
-            status_tc = get_status_str(slnd_tc, 250)
-            
-            kl_bc = bridge.get_cb_effective_length("chord")
-            slnd_bc = bridge.get_cb_slenderness(pair, "chord")
-            status_bc = get_status_str(slnd_bc, 400)
-            
-            top_chord_enabled = bridge.output_dict.get("member_properties.cross_bracing_details.top_chord", True)
-            bottom_chord_enabled = bridge.output_dict.get("member_properties.cross_bracing_details.bottom_chord", True)
-            
-            num_rows = 1 + int(top_chord_enabled) + int(bottom_chord_enabled)
-            row_tex = r"\multirow{" + str(num_rows) + r"}{*}{\makecell{" + _tex(pair) + r"}}"
-            row_tex += f" & Diagonal & C & {kl_diag} & {slnd_diag} & 250 --- {status_diag} \\\\[\\rowpad]"
-            
-            if top_chord_enabled:
-                row_tex += f"\n\\cline{{2-6}}\n & Top chord & C & {kl_tc} & {slnd_tc} & 250 --- {status_tc} \\\\[\\rowpad]"
-            if bottom_chord_enabled:
-                row_tex += f"\n\\cline{{2-6}}\n & Bottom chord & T & {kl_bc} & {slnd_bc} & 400 --- {status_bc} \\\\[\\rowpad]"
-                
-            row_tex += "\n\\hline"
-            cb_slenderness_rows.append(row_tex)
-    cb_slenderness_content = "\n".join(cb_slenderness_rows)
-
-    # Generate Table 5.20(c) rows
-    cb_capacity_rows = []
-    for pair in pairs:
-        rows_for_pair = []
-        for member, label in [("diagonal", "Diagonal"),
-                            ("chord", "Chord")]:
-            force_str, ftype = bridge.get_cb_governing_force(pair, member)
-            section  = bridge.get_cb_section(pair, member, ftype)
-            gov_lc   = bridge.get_cb_gov_lc(pair, member, ftype)
-            capacity = bridge.get_cb_capacity(pair, member, ftype)
-            ur       = bridge.get_cb_efficiency(pair, member, ftype)
-            status   = bridge.get_cb_status(pair, member, ftype)
-            rows_for_pair.append(
-                r" & " + label + r" & " + section
-                + r" & " + gov_lc + r" & " + force_str + r" & " + capacity
-                + r" & " + ur + r" & " + status + r" \\[\rowpad]\cline{2-8}"
+        if not pairs:
+            # fallback: one placeholder row
+            cb_forces_rows.append(
+                r"""Between Girders & Diagonal &  &  &  &  \\[\rowpad]
+    \hline"""
             )
-        first = r"\multirow{2}{*}{\makecell{" + _tex(pair) + r"}}" + rows_for_pair[0]
-        rest  = rows_for_pair[1:]
-        cb_capacity_rows.append(first)
-        cb_capacity_rows.extend(rest)
-        cb_capacity_rows.append(r"\hline")
-    cb_capacity_content = "\n".join(cb_capacity_rows)
+        else:
+            for pair in pairs:
+                pair_id = pair.replace("-", "")
+                for member, label in [("diagonal", "Diagonal"),
+                                    ("chord", "Top / Bottom chord")]:
+                    force_str, ftype = data.get_cb_governing_force(pair, member)
+                    conn_type = data.get_cb_connection(pair, member, ftype)
+                    section  = data.get_cb_section(pair, member, ftype)
+
+                    # Fetch properties from output_dict
+                    if member == "diagonal":
+                        pfx = f"{prop_root}.{diagonal_group}.{pair_id}"
+                    else:
+                        pfx = f"{prop_root}.bottom_chord.{pair_id}"
+                        if data.output_dict.get(f"{pfx}.A") is None:
+                            pfx = f"{prop_root}.top_chord.{pair_id}"
+
+                    area_cm2 = data.output_dict.get(f"{pfx}.A")
+                    rv_cm = data.output_dict.get(f"{pfx}.rv")
+
+                    # Convert Area: cm² -> mm²
+                    area_str = f"{float(area_cm2) * 100:.1f}" if area_cm2 is not None else ""
+                    # Convert rv: cm -> mm
+                    rmin_str = f"{float(rv_cm) * 10:.1f}" if rv_cm is not None else ""
+                    cb_forces_rows.append(
+                        r"\multirow{2}{*}{\makecell{" + _tex(pair) + r"}} & "
+                        + label + r" & " + conn_type + r" & " + section
+                        + r" & " + area_str + r" & " + rmin_str
+                        + r" \\[\rowpad]\cline{2-6}"
+                    )
+                cb_forces_rows.append(r"\hline")
+        forces_content = "\n".join(cb_forces_rows)
+
+        # Generate Table 5.20(b) rows
+        def get_status_str(slnd_str, limit):
+            try:
+                v = float(slnd_str)
+                return r"\statuspass{PASS}" if v <= limit else r"\statusfail{FAIL}"
+            except (ValueError, TypeError):
+                return ""
+        cb_slenderness_rows = []
+        if not pairs:
+            cb_slenderness_rows.append(
+                r"""Between Girders & Diagonal & C &  &  &  ---  \\[\rowpad]
+    \hline"""
+            )
+        else:
+            for pair in pairs:
+                kl_diag = data.get_cb_effective_length("diagonal")
+                slnd_diag = data.get_cb_slenderness(pair, "diagonal")
+                status_diag = get_status_str(slnd_diag, 250)
+            
+                kl_tc = data.get_cb_effective_length("chord")
+                slnd_tc = data.get_cb_slenderness(pair, "chord")
+                status_tc = get_status_str(slnd_tc, 250)
+            
+                kl_bc = data.get_cb_effective_length("chord")
+                slnd_bc = data.get_cb_slenderness(pair, "chord")
+                status_bc = get_status_str(slnd_bc, 400)
+            
+                top_chord_enabled, bottom_chord_enabled = chords_enabled(pair)
+            
+                num_rows = 1 + int(top_chord_enabled) + int(bottom_chord_enabled)
+                row_tex = r"\multirow{" + str(num_rows) + r"}{*}{\makecell{" + _tex(pair) + r"}}"
+                row_tex += f" & Diagonal & C & {kl_diag} & {slnd_diag} & 250 --- {status_diag} \\\\[\\rowpad]"
+            
+                if top_chord_enabled:
+                    row_tex += f"\n\\cline{{2-6}}\n & Top chord & C & {kl_tc} & {slnd_tc} & 250 --- {status_tc} \\\\[\\rowpad]"
+                if bottom_chord_enabled:
+                    row_tex += f"\n\\cline{{2-6}}\n & Bottom chord & T & {kl_bc} & {slnd_bc} & 400 --- {status_bc} \\\\[\\rowpad]"
+                
+                row_tex += "\n\\hline"
+                cb_slenderness_rows.append(row_tex)
+        slenderness_content = "\n".join(cb_slenderness_rows)
+
+        # Generate Table 5.20(c) rows
+        cb_capacity_rows = []
+        for pair in pairs:
+            rows_for_pair = []
+            for member, label in [("diagonal", "Diagonal"),
+                                ("chord", "Chord")]:
+                force_str, ftype = data.get_cb_governing_force(pair, member)
+                section  = data.get_cb_section(pair, member, ftype)
+                gov_lc   = data.get_cb_gov_lc(pair, member, ftype)
+                capacity = data.get_cb_capacity(pair, member, ftype)
+                ur       = data.get_cb_efficiency(pair, member, ftype)
+                status   = data.get_cb_status(pair, member, ftype)
+                rows_for_pair.append(
+                    r" & " + label + r" & " + section
+                    + r" & " + gov_lc + r" & " + force_str + r" & " + capacity
+                    + r" & " + ur + r" & " + status + r" \\[\rowpad]\cline{2-8}"
+                )
+            first = r"\multirow{2}{*}{\makecell{" + _tex(pair) + r"}}" + rows_for_pair[0]
+            rest  = rows_for_pair[1:]
+            cb_capacity_rows.append(first)
+            cb_capacity_rows.extend(rest)
+            cb_capacity_rows.append(r"\hline")
+        capacity_content = "\n".join(cb_capacity_rows)
+        return forces_content, slenderness_content, capacity_content
+
+    cb_forces_content, cb_slenderness_content, cb_capacity_content = _bracing_rows(
+        bridge, "transverse_member_design.cb.section_properties", "bracing",
+        lambda pair: (bridge.output_dict.get("member_properties.cross_bracing_details.top_chord", True),
+                      bridge.output_dict.get("member_properties.cross_bracing_details.bottom_chord", True)),
+    )
+
+    # End diaphragms designed as bracing have their own results; the chord
+    # flags are stored per girder pair.
+    ed_data = bridge.end_diaphragm_view()
+    ed_forces_content, ed_slenderness_content, ed_capacity_content = _bracing_rows(
+        ed_data, "transverse_member_design.ed.section_properties", "end_diaphragm",
+        lambda pair: tuple(
+            bridge.output_dict.get(
+                f"member_properties.end_diaphragm_details.{pair.replace('-', '')}.{chord}", True)
+            for chord in ("top_chord", "bottom_chord")),
+    )
+    ed_type = next((str(v) for k, v in bridge.input_dict.items()
+                    if str(k).startswith(KEY_MP_ED_TYPE) and v), "")
+    ed_is_bracing = "brac" in ed_type.lower()
+    ed_has_results = ed_is_bracing and ed_data.has_member_designs()
+    if ed_is_bracing:
+        ed_note = ("\n\n" + r"\noindent\textit{No end diaphragm member design results are available for "
+                   r"this run, so no member checks are reported.}")
+    else:
+        ed_note = ("\n\n" + r"\noindent\textit{End diaphragms are specified as "
+                   + _tex(ed_type or "rolled or welded beams")
+                   + r"; their design check is not yet implemented in this version.}")
 
 
 
@@ -934,12 +970,12 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
     # (3) Cross bracing — worst pair/member by UR for the given force type.
     _cb_pairs_522 = bridge.get_cb_pairs()
 
-    def _cb_row(force_type):
+    def _cb_row(force_type, data=bridge):
         best = None  # (ur, pair, member, capacity_str)
-        for pair in _cb_pairs_522:
+        for pair in data.get_cb_pairs():
             for member in ("diagonal", "chord"):
-                cap = bridge.get_cb_capacity(pair, member, force_type)
-                eff = bridge.get_cb_efficiency(pair, member, force_type)
+                cap = data.get_cb_capacity(pair, member, force_type)
+                eff = data.get_cb_efficiency(pair, member, force_type)
                 try:
                     ur = float(eff)
                 except (TypeError, ValueError):
@@ -949,7 +985,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         if best is None:
             return ("---", "---", "---", "---")
         ur, pair, member, cap = best
-        gov = bridge.get_cb_gov_lc(pair, member, force_type) or "---"
+        gov = data.get_cb_gov_lc(pair, member, force_type) or "---"
         dem = f"{float(cap) * ur:.2f} kN" if cap else "---"
         cap_s = (cap + " kN") if cap else "---"
         return (gov, dem, cap_s, _ur_522(ur))
@@ -998,22 +1034,16 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         # Single message spanning the 4 data columns.
         return label + r" & \multicolumn{4}{c|}{" + msg + r"} \\[\rowpad]" + "\n\\hline"
 
-    # End diaphragm: when configured as Cross Bracing it is designed as bracing
-    # members → mirror the cross-bracing axial rows. For Rolled / Welded beam end
-    # diaphragms the moment/shear design is not implemented yet → show a message.
-    _ed_type = ""
-    for _k, _v in bridge.input_dict.items():
-        if str(_k).startswith(KEY_MP_ED_TYPE) and _v:
-            _ed_type = str(_v)
-            break
-    _ed_is_cb = "brac" in _ed_type.strip().lower()
-    if _ed_is_cb:
-        _ed_moment_row = _row522(r"End Diaphragm --- Moment", _cb_row("compression"))
-        _ed_shear_row  = _row522(r"End Diaphragm --- Shear",  _cb_row("tension"))
+    # End diaphragms designed as bracing carry axial force, so they are
+    # summarised like the cross bracing but from their own design results.
+    # Rolled / welded beam end diaphragms have no design check yet.
+    if ed_is_bracing:
+        _ed_first_row  = _row522(r"End Diaphragm --- Compression", _cb_row("compression", ed_data))
+        _ed_second_row = _row522(r"End Diaphragm --- Tension",     _cb_row("tension", ed_data))
     else:
         _ed_msg = r"Rolled / Welded section --- design to be added"
-        _ed_moment_row = _row522_msg(r"End Diaphragm --- Moment", _ed_msg)
-        _ed_shear_row  = _row522_msg(r"End Diaphragm --- Shear",  _ed_msg)
+        _ed_first_row  = _row522_msg(r"End Diaphragm --- Moment", _ed_msg)
+        _ed_second_row = _row522_msg(r"End Diaphragm --- Shear",  _ed_msg)
 
     # Crack width (slab): governing crack width vs limit from the deck designer
     # (frequent SLS combination). _dk_gov_wk is the max of bottom/top/overhang wk.
@@ -1057,8 +1087,8 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         _row522(r"Cross Bracing --- Compression", _cb_row("compression")),
         _row522(r"Cross Bracing --- Tension",     _cb_row("tension")),
         _row522(r"Cross Bracing --- Slenderness", _cb_slender_row()),
-        _ed_moment_row,
-        _ed_shear_row,
+        _ed_first_row,
+        _ed_second_row,
     ]
     t522_content = "\n".join(_t522)
 
@@ -1337,25 +1367,25 @@ Cross bracing between adjacent plate girders provides lateral stability during c
 % ===========================
 
 End diaphragms at the supports transfer transverse loads to the bearings, restrain the bottom flanges against lateral displacement, and maintain the girder cross-section geometry during construction and in service. They are designed per IS~800:2007 and IRC~24:2010 Cl.~507.
-
+""" + (r"""
 \vspace{\tablegap}
 """ + longtable_begin(r"""|C{2.0cm}|L{2.0cm}|L{2.2cm}|C{2.5cm}|C{2.0cm}|C{2.0cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Connection} & \textbf{Section} & \textbf{$A_g$ (mm²)} & \textbf{$r_{min}$ (mm)} \\[\rowpad]""", caption=r"""End Diaphragm --- Connection and Section Properties""") + r"""
-""" + cb_forces_content + r"""
+""" + ed_forces_content + r"""
 \end{longtable}
 \noindent\textit{Note: $A_g$ = gross cross-sectional area; $r_{min}$ = minimum radius of gyration.}
 
 \vspace{\tablegap}
 """ + longtable_begin(r"""|C{2.2cm}|L{2.2cm}|L{2.5cm}|C{2.5cm}|C{2.5cm}|>{\centering\arraybackslash}p{3.6cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Nature} & \textbf{Eff.\ Length $KL$ (mm)} & \textbf{$KL/r$} & \textbf{Limit / Status} \\[\rowpad]""", caption=r"""End Diaphragm --- Slenderness Ratio Check (IS~800 Cl.~3.8 )""") + r"""
-""" + cb_slenderness_content + r"""
+""" + ed_slenderness_content + r"""
 \end{longtable}
 \noindent\textit{Note:  3. Limit = 250 for compression members, 400 for tension members. $K = 1.0$ for members with both ends pinned.}
 
 \vspace{\tablegap}
 
 """ + longtable_begin(r"""|C{2.0cm}|L{1.8cm}|C{2.2cm}|C{3.0cm}|C{1.8cm}|C{1.8cm}|C{1.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Section} & \textbf{Governing LC} & \textbf{Demand (kN)} & \textbf{Capacity (kN)} & \textbf{UR} & \textbf{Status} \\[\rowpad]""", caption=r"""End Diaphragm Design --- Capacity Summary""") + r"""
-""" + cb_capacity_content + r"""
+""" + ed_capacity_content + r"""
 \end{longtable}
-\noindent\textit{Note: Designed per IS 800 Cl. 7 (compression) and Cl. 6 (tension). OsdagBridge cross-bracing module used.}
+\noindent\textit{Note: Designed per IS 800 Cl. 7 (compression) and Cl. 6 (tension). OsdagBridge cross-bracing module used.}""" if ed_has_results else ed_note) + r"""
 
 % ===========================
 \section{Overall Design Check Summary}

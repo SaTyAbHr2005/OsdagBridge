@@ -540,6 +540,26 @@ class ReportDataBridge:
         except Exception:
             return ""
 
+    def has_member_designs(self) -> bool:
+        """True when at least one bracing member has a design result."""
+        return any(self._cb_pair_designs().values())
+
+    def end_diaphragm_view(self) -> "ReportDataBridge":
+        """The bracing accessors above, reading the end diaphragm design instead."""
+        return _EndDiaphragmData(self.output_dict, self.input_dict, self.payload)
+
+
+class _EndDiaphragmData(ReportDataBridge):
+    """End diaphragms designed as bracing store their results in the same
+    pair -> member -> force type layout as the cross bracing, so only the two
+    source dictionaries differ."""
+
+    def _cb_forces_dict(self) -> dict:
+        return self.output_dict.get("end_diaphragm_forces_dict", {})
+
+    def _cb_pair_designs(self) -> dict:
+        return self.output_dict.get("end_diaphragm_design_results", {})
+
 def _format_project_location(pl_data):
     if not pl_data:
         return ''
