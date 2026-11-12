@@ -3,6 +3,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 from osdagbridge.core.reports.report_utils import _fig_or_placeholder, _render_value, _tex, get_girder_entries
+from osdagbridge.core.reports.styles import TYPOGRAPHY
 from osdagbridge.core.utils.common import (
     KEY_CARRIAGEWAY_WIDTH,
     KEY_SD_SECTION_DESIGNATION,
@@ -179,7 +180,7 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
 
     return r"""
 \newpage
-{\centering\Large\bfseries Executive Summary\par}
+{\centering""" + TYPOGRAPHY.chapter_title + r""" Executive Summary\par}
 \addcontentsline{toc}{chapter}{Executive Summary}
 \vspace{\tablegap}
 
@@ -245,8 +246,4 @@ Deck design pass
 \item Substructure and foundation design are not included in this report.
 \item Splice connections and bearings are not designed in this version.
 \end{itemize}
-
-% Restore numbered chapter format
-\titleformat{\chapter}[block]{\normalfont\Large\bfseries\centering}{\thechapter}{1em}{}
-\titlespacing*{\chapter}{0pt}{-30pt}{10pt}
 """

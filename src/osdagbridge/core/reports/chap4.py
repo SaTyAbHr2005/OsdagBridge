@@ -82,7 +82,7 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 
 \vspace{\tablegap}
 \begingroup
-\footnotesize
+\tablesmallfont
 \setlength{\tabcolsep}{\colsepdense}
 \renewcommand{\arraystretch}{\densearraystretch}
 

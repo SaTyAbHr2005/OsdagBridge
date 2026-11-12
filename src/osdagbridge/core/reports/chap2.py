@@ -86,9 +86,6 @@ def ch2_input_parameters(m, input_dict, output_dict=None):
     return r"""
 \chapter{Input Parameters}
 
-\setlength{\abovecaptionskip}{2pt}
-\setlength{\belowcaptionskip}{2pt}
-
 This section documents all inputs provided to OsdagBridge. User-provided inputs are clearly distinguished from software-assumed defaults. Where the user did not supply a value, the software has applied the IRC/IS code default or an empirical guideline; these are annotated with an asterisk (\sdstar{}).
 
 \section{Basic Inputs (User-Defined)}

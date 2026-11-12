@@ -84,11 +84,17 @@ class FigureStyle:
 @dataclass(frozen=True)
 class Typography:
     chapter_title: str = r"\Large\bfseries"
+    # The report class leaves a large gap above chapter titles; pulling
+    # them up keeps the title close to the running header.
+    chapter_title_before: str = "-30pt"
     chapter_title_after: str = "10pt"
     toc_title: str = r"\Large\bfseries"
     toc_depth: int = 2
     caption_label_font: str = "bf"
     caption_justification: str = "raggedright"
+    caption_skip: str = "2pt"
+    # Dense tables and long formulas inside table cells.
+    table_small_font: str = r"\footnotesize"
 
 
 @dataclass(frozen=True)
@@ -182,8 +188,11 @@ def caption_setup() -> str:
     labelfont={ty.caption_label_font},
     justification={ty.caption_justification},
     singlelinecheck=false,
-    format=plain
-}}"""
+    format=plain,
+    aboveskip={ty.caption_skip},
+    belowskip={ty.caption_skip}
+}}
+\newcommand{{\tablesmallfont}}{{{ty.table_small_font}}}"""
 
 
 def heading_formats() -> str:
@@ -193,7 +202,7 @@ def heading_formats() -> str:
     # number width, so section and subsection numbers line up in columns.
     return rf"""\titleformat{{\chapter}}[block]
   {{\normalfont{ty.chapter_title}\centering}}{{\thechapter}}{{1em}}{{}}
-\titlespacing*{{\chapter}}{{0pt}}{{0pt}}{{{ty.chapter_title_after}}}
+\titlespacing*{{\chapter}}{{0pt}}{{{ty.chapter_title_before}}}{{{ty.chapter_title_after}}}
 \setcounter{{tocdepth}}{{{ty.toc_depth}}}
 
 \titlecontents{{chapter}}[1.5em]
