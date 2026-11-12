@@ -53,13 +53,14 @@ class TableStyle:
     # a table from the paragraph before it.
     longtable_pre: str = "0pt"
     longtable_post: str = "6pt"
-    # A table starting with fewer lines than this left on the page moves to
-    # the next page instead of leaving its caption or first row stranded.
-    # A longtable needs room for caption, header, "Continued" foot and at
-    # least one row; with less, longtable sets only the foot on that page
-    # and the first header lands under the repeated one on the next page.
+    # A float table starting with fewer lines than this left on the page
+    # moves to the next page instead of leaving its caption stranded.
+    # Longtables are deliberately left out: longtable already moves to a new
+    # page when its caption, header, foot and first row do not fit, and the
+    # extra break point from \needspace let TeX break just before the table
+    # after longtable had taken over the page, which left a lone "Continued"
+    # foot behind and printed the first header under the repeated one.
     min_lines_before_table: int = 5
-    min_lines_before_longtable: int = 7
     # Labels on tables that break across pages.
     continued_caption: str = "(continued)"
     continued_note: str = r"\small\itshape Continued on next page"
@@ -203,7 +204,6 @@ def latex_definitions() -> str:
 \newcommand{{\tablecontinuednote}}{{{t.continued_note}}}
 
 \BeforeBeginEnvironment{{table}}{{\needspace{{{t.min_lines_before_table}\baselineskip}}}}
-\BeforeBeginEnvironment{{longtable}}{{\needspace{{{t.min_lines_before_longtable}\baselineskip}}}}
 """
 
 
