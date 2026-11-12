@@ -224,7 +224,7 @@ This section provides a concise summary of the bridge design, key inputs, govern
 \vspace{0.4em}
 \noindent\textit{Note: Utilization ratio (UR) = demand / capacity. A value $< 1.0$ indicates a passing check.}
 
-\vspace{1em}
+\vspace{\tablegap}
 
 \section*{Key Design Outcomes Summary}
 \addcontentsline{toc}{section}{Key Design Outcomes Summary}

@@ -536,7 +536,7 @@ class ReportDataBridge:
                 ur = float(val)
                 if ur <= 1.0:
                     return r"\textcolor{black}{PASS}"
-                return r"\textcolor{red}{FAIL}"
+                return r"\statusfail{FAIL}"
         except (TypeError, ValueError):
             pass
         return ""

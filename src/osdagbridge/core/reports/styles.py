@@ -28,7 +28,7 @@ class Palette:
     brand: str = "91B014"
     status_pass: str = "000000"
     status_fail: str = "FF0000"
-    log_info: str = "0000FF"
+    log_warning: str = "0000FF"
     log_error: str = "FF0000"
 
 
@@ -84,7 +84,7 @@ def latex_definitions() -> str:
 \definecolor{{osdagGreen}}{{HTML}}{{{c.brand}}}
 \definecolor{{statusPass}}{{HTML}}{{{c.status_pass}}}
 \definecolor{{statusFail}}{{HTML}}{{{c.status_fail}}}
-\definecolor{{logInfo}}{{HTML}}{{{c.log_info}}}
+\definecolor{{logWarning}}{{HTML}}{{{c.log_warning}}}
 \definecolor{{logError}}{{HTML}}{{{c.log_error}}}
 \newcommand{{\statuspass}}[1]{{\textcolor{{statusPass}}{{#1}}}}
 \newcommand{{\statusfail}}[1]{{\textcolor{{statusFail}}{{#1}}}}
