@@ -71,6 +71,7 @@ from osdagbridge.core.utils.common import (
 )
 
 from osdagbridge.core.reports.report_utils import _render_value, get_girder_entries, _tex
+from .tables import longtable_begin
 
 def ch2_input_parameters(m, input_dict, output_dict=None):
     girder_entries = get_girder_entries(input_dict)
@@ -163,11 +164,7 @@ Where the user has modified additional inputs, those values are reported here. W
 
 \vspace{\tablegap}
 
-\begin{longtable}{|L{5.5cm}|p{10.0cm}|}
-\caption{\textbf{Typical Section Details}}
-\hline
-\tableheader \textbf{parameter} & \textbf{value} \\
-\hline
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Typical Section Details""") + r"""
 \textnormal{Overall Bridge Width (m)} & """ + (_render_value(input_dict, KEY_TS_OVERALL_WIDTH)) + r""" \\[\rowpad]
 \hline
 \textnormal{No. of Girders} & """ + (_render_value(input_dict, KEY_TS_NO_OF_GIRDERS)) + r""" \\[\rowpad]
@@ -186,11 +183,7 @@ Where the user has modified additional inputs, those values are reported here. W
 
 \vspace{\tablegap}
 
-\begin{longtable}{|L{5.5cm}|p{10.0cm}|}
-\caption{\textbf{Components Details}}
-\hline
-\tableheader \textbf{parameter} & \textbf{value} \\
-\hline
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Components Details""") + r"""
 \textnormal{Crash Barrier Type} & """ + (_render_value(input_dict, KEY_CB_TYPE)) + r""" \\[\rowpad]
 \hline
 \textnormal{Crash Barrier Load (kN/m)} & """ + (_render_value(input_dict, KEY_CB_LOAD)) + r""" \\[\rowpad]
@@ -296,33 +289,19 @@ def _girder_tables(input_dict, n_girders):
     return (r"""
 \newpage
 
-\begin{longtable}{|L{2.2cm}|L{1.8cm}|p{3.8cm}|p{3.8cm}|p{3.8cm}|}
-\caption{\textbf{Girder General Information}}
-\hline
-\tableheader \textbf{Girder} & \textbf{Member ID} & \textbf{Design Mode} & \textbf{Girder Type} & \textbf{Girder Symmetry} \\[\rowpad]
-\hline
+""" + longtable_begin(r"""|L{2.2cm}|L{1.8cm}|p{3.8cm}|p{3.8cm}|p{3.8cm}|""", r"""\tableheader \textbf{Girder} & \textbf{Member ID} & \textbf{Design Mode} & \textbf{Girder Type} & \textbf{Girder Symmetry} \\[\rowpad]""", caption=r"""Girder General Information""") + r"""
 """
             + gen_rows
             + r"""\end{longtable}
 
 \vspace{\tablegap}
-\begin{longtable}{|L{1.8cm}|L{2.3cm}|L{1.8cm}|p{4.8cm}|p{4.8cm}|}
-\caption{\textbf{Girder Section Dimensions}}
-\hline
-\tableheader \textbf{Girder} & \textbf{Total Depth, D (mm)} & \textbf{Web, $t_w$ (mm)} & \textbf{Top Flange (b\textsubscript{tf}, t\textsubscript{tf}) mm} & \textbf{Bottom Flange (b\textsubscript{bf}, t\textsubscript{bf}) mm} \\[\rowpad]
-\hline
+""" + longtable_begin(r"""|L{1.8cm}|L{2.3cm}|L{1.8cm}|p{4.8cm}|p{4.8cm}|""", r"""\tableheader \textbf{Girder} & \textbf{Total Depth, D (mm)} & \textbf{Web, $t_w$ (mm)} & \textbf{Top Flange (b\textsubscript{tf}, t\textsubscript{tf}) mm} & \textbf{Bottom Flange (b\textsubscript{bf}, t\textsubscript{bf}) mm} \\[\rowpad]""", caption=r"""Girder Section Dimensions""") + r"""
 """
             + dim_rows
             + r"""\end{longtable}
 
 \vspace{\tablegap}
-\begin{longtable}{|L{1.4cm}|p{2.2cm}|p{2.2cm}|p{3.0cm}|p{2.4cm}|p{2.2cm}|}
-\caption{\textbf{Girder Restraint and Stiffener Details}}\\
-\hline
-\tableheader \textbf{Girder} & \textbf{Torsional / Warping Restraint} & \textbf{Web Philosophy} & \textbf{Intermediate Stiffeners} & \textbf{Longitudinal Stiffeners} & \textbf{Bearing Stiffener} \\[\rowpad]
-\hline
-\endfirsthead
-\endhead
+""" + longtable_begin(r"""|L{1.4cm}|p{2.2cm}|p{2.2cm}|p{3.0cm}|p{2.4cm}|p{2.2cm}|""", r"""\tableheader \textbf{Girder} & \textbf{Torsional / Warping Restraint} & \textbf{Web Philosophy} & \textbf{Intermediate Stiffeners} & \textbf{Longitudinal Stiffeners} & \textbf{Bearing Stiffener} \\[\rowpad]""", caption=r"""Girder Restraint and Stiffener Details""") + r"""
 
 """
             + rst_rows
@@ -371,21 +350,13 @@ def _bracing_tables(input_dict, n_girders):
     return (r"""
 \newpage
 
-\begin{longtable}{|L{2.2cm}|L{2.2cm}|L{3.0cm}|L{2.5cm}|C{1.8cm}|C{1.8cm}|}
-\caption{\textbf{Member Properties: Cross Bracing Details}}
-\hline
-\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} & \textbf{Spacing (m)} \\
-\hline
+""" + longtable_begin(r"""|L{2.2cm}|L{2.2cm}|L{3.0cm}|L{2.5cm}|C{1.8cm}|C{1.8cm}|""", r"""\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} & \textbf{Spacing (m)} \\""", caption=r"""Member Properties: Cross Bracing Details""") + r"""
 """
 + cb_rows
 + r"""\end{longtable}
 
 \vspace{\tablegap}
-\begin{longtable}{|L{2.2cm}|L{2.2cm}|L{3.0cm}|L{2.5cm}|C{1.8cm}|C{1.8cm}|}
-\caption{\textbf{Member Properties: End Diaphragm Details}}
-\hline
-\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} \\
-\hline
+""" + longtable_begin(r"""|L{2.2cm}|L{2.2cm}|L{3.0cm}|L{2.5cm}|C{1.8cm}|C{1.8cm}|""", r"""\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} \\""", caption=r"""Member Properties: End Diaphragm Details""") + r"""
 """
 + ed_rows
 + r"""\end{longtable}
@@ -399,11 +370,7 @@ def _shear_connector_table(input_dict, output_dict=None):
 \label{subsec:shear-connectors}
 
 \vspace{\sectiongap}
-\begin{longtable}{|L{5.5cm}|p{10.0cm}|}
-\caption{\textbf{Shear Connector Details}}
-\hline
-\tableheader \textbf{parameter} & \textbf{value} \\
-\hline
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Shear Connector Details""") + r"""
 \textnormal{Stud Diameter (mm)} & """ + (_render_value(od, KEY_SD_SHEAR_DIAMETER, ' mm')) + r""" \\[\rowpad]
 \hline
 \textnormal{Stud Height (mm)} & """ + (_render_value(od, KEY_SD_SHEAR_HEIGHT, ' mm')) + r""" \\[\rowpad]
@@ -425,11 +392,7 @@ def _safety_factors_table(input_dict):
 \noindent\textit{Note: All values are per IRC 22 Table 1 unless user-modified.}
 
 \vspace{\gapsmall}
-\begin{longtable}{|L{5.5cm}|p{10.0cm}|}
-\caption{\textbf{Partial Safety Factors}}
-\hline
-\tableheader \textbf{parameter} & \textbf{value} \\
-\hline
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Partial Safety Factors""") + r"""
 \textnormal{$\gamma_{M0}$ (Yielding / Buckling)} & """ + (_render_value(input_dict, KEY_DO_GAMMA_M0)) + r""" \\[\rowpad]
 \hline
 \textnormal{$\gamma_{M1}$ (Ultimate Stress)} & """ + (_render_value(input_dict, KEY_DO_GAMMA_M1)) + r""" \\[\rowpad]
