@@ -695,7 +695,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         diagonal_group  property group of the diagonals ('bracing' or 'end_diaphragm')
         chords_enabled  callable(pair) -> (top chord present, bottom chord present)
         """
-        # Generate Table 5.20(a) rows
+        # Connection and section properties table
         cb_forces_rows = []
         pairs = data.get_cb_pairs()
 
@@ -703,7 +703,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
             # fallback: one placeholder row
             cb_forces_rows.append(
                 r"""Between Girders & Diagonal &  &  &  &  \\[\rowpad]
-    \hline"""
+\hline"""
             )
         else:
             for pair in pairs:
@@ -738,7 +738,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
                 cb_forces_rows.append(r"\hline")
         forces_content = "\n".join(cb_forces_rows)
 
-        # Generate Table 5.20(b) rows
+        # Slenderness table
         def get_status_str(slnd_str, limit):
             try:
                 v = float(slnd_str)
@@ -749,7 +749,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         if not pairs:
             cb_slenderness_rows.append(
                 r"""Between Girders & Diagonal & C &  &  &  ---  \\[\rowpad]
-    \hline"""
+\hline"""
             )
         else:
             for pair in pairs:
@@ -780,7 +780,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
                 cb_slenderness_rows.append(row_tex)
         slenderness_content = "\n".join(cb_slenderness_rows)
 
-        # Generate Table 5.20(c) rows
+        # Capacity summary table
         cb_capacity_rows = []
         for pair in pairs:
             rows_for_pair = []
@@ -894,7 +894,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
     #      deflection) only appear per-LC, so fall back to per_lc for those.
     #  (2) Deck slab: URs from deck_design_results (Demand/Capacity not stored).
     #  (3) Cross bracing: existing get_cb_* helpers (worst pair/member by UR).
-    #      End diaphragm has no report helpers yet → "---" for now.
+    #      Bracing-type end diaphragms use the same helpers on their own results.
     _pg_522 = (bridge.output_dict.get("design_results", {}) or {}).get("per_girder", {}) or {}
     _dd_522 = bridge.output_dict.get("deck_design_results", {}) or {}
 
@@ -970,7 +970,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
     # (3) Cross bracing — worst pair/member by UR for the given force type.
     _cb_pairs_522 = bridge.get_cb_pairs()
 
-    def _cb_row(force_type, data=bridge):
+    def _cb_row(force_type, data):
         best = None  # (ur, pair, member, capacity_str)
         for pair in data.get_cb_pairs():
             for member in ("diagonal", "chord"):
@@ -1084,8 +1084,8 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         _row522(r"Deck --- Cantilever Overhang",  _deck_row(KEY_DD_M_ULS_OH, KEY_DD_MU_OH, "kN-m/m", is_oh=True)),
         _row522(r"Deck --- Punching Shear",       _deck_row(KEY_DD_PUNCH_VED, KEY_DD_VRD_C_MPA, "MPa")),
         _row522(r"Deck --- One-Way Shear",        _deck_row(KEY_DD_SHEAR_VED, KEY_DD_SHEAR_VRDC, "kN/m")),
-        _row522(r"Cross Bracing --- Compression", _cb_row("compression")),
-        _row522(r"Cross Bracing --- Tension",     _cb_row("tension")),
+        _row522(r"Cross Bracing --- Compression", _cb_row("compression", bridge)),
+        _row522(r"Cross Bracing --- Tension",     _cb_row("tension", bridge)),
         _row522(r"Cross Bracing --- Slenderness", _cb_slender_row()),
         _ed_first_row,
         _ed_second_row,
@@ -1353,7 +1353,7 @@ Cross bracing between adjacent plate girders provides lateral stability during c
 """ + longtable_begin(r"""|C{2.2cm}|L{2.2cm}|L{2.5cm}|C{2.5cm}|C{2.5cm}|>{\centering\arraybackslash}p{3.6cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Nature} & \textbf{Eff.\ Length $KL$ (mm)} & \textbf{$KL/r$} & \textbf{Limit / Status} \\[\rowpad]""", caption=r"""Cross Bracing --- Slenderness Ratio Check (IS~800 Cl.~3.8 )""") + r"""
 """ + cb_slenderness_content + r"""
 \end{longtable}
-\noindent\textit{Note:  3. Limit = 250 for compression members, 400 for tension members. $K = 1.0$ for members with both ends pinned.}
+\noindent\textit{Note: Limit = 250 for compression members, 400 for tension members. $K = 1.0$ for members with both ends pinned.}
 
 \vspace{\tablegap}
 """ + longtable_begin(r"""|C{2.0cm}|L{1.8cm}|C{2.2cm}|C{3.0cm}|C{1.8cm}|C{1.8cm}|C{1.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Section} & \textbf{Governing LC} & \textbf{Demand (kN)} & \textbf{Capacity (kN)} & \textbf{UR} & \textbf{Status} \\[\rowpad]""", caption=r"""Cross Bracing Design --- Capacity Summary""") + r"""
@@ -1378,14 +1378,14 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 """ + longtable_begin(r"""|C{2.2cm}|L{2.2cm}|L{2.5cm}|C{2.5cm}|C{2.5cm}|>{\centering\arraybackslash}p{3.6cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Nature} & \textbf{Eff.\ Length $KL$ (mm)} & \textbf{$KL/r$} & \textbf{Limit / Status} \\[\rowpad]""", caption=r"""End Diaphragm --- Slenderness Ratio Check (IS~800 Cl.~3.8 )""") + r"""
 """ + ed_slenderness_content + r"""
 \end{longtable}
-\noindent\textit{Note:  3. Limit = 250 for compression members, 400 for tension members. $K = 1.0$ for members with both ends pinned.}
+\noindent\textit{Note: Limit = 250 for compression members, 400 for tension members. $K = 1.0$ for members with both ends pinned.}
 
 \vspace{\tablegap}
 
 """ + longtable_begin(r"""|C{2.0cm}|L{1.8cm}|C{2.2cm}|C{3.0cm}|C{1.8cm}|C{1.8cm}|C{1.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Section} & \textbf{Governing LC} & \textbf{Demand (kN)} & \textbf{Capacity (kN)} & \textbf{UR} & \textbf{Status} \\[\rowpad]""", caption=r"""End Diaphragm Design --- Capacity Summary""") + r"""
 """ + ed_capacity_content + r"""
 \end{longtable}
-\noindent\textit{Note: Designed per IS 800 Cl. 7 (compression) and Cl. 6 (tension). OsdagBridge cross-bracing module used.}""" if ed_has_results else ed_note) + r"""
+\noindent\textit{Note: Designed per IS 800 Cl. 7 (compression) and Cl. 6 (tension).}""" if ed_has_results else ed_note) + r"""
 
 % ===========================
 \section{Overall Design Check Summary}

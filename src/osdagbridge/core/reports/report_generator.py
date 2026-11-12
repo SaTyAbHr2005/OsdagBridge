@@ -541,8 +541,12 @@ class ReportDataBridge:
             return ""
 
     def has_member_designs(self) -> bool:
-        """True when at least one bracing member has a design result."""
-        return any(self._cb_pair_designs().values())
+        """True when a pair in the force results has at least one designed member."""
+        designs = self._cb_pair_designs()
+        return any(
+            any(force_results for force_results in (designs.get(pair) or {}).values())
+            for pair in self.get_cb_pairs()
+        )
 
     def end_diaphragm_view(self) -> "ReportDataBridge":
         """The bracing accessors above, reading the end diaphragm design instead."""
