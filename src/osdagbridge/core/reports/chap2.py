@@ -94,13 +94,7 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 
 \noindent\textit{Note: These inputs are mandatory and were provided by the user.}
 
-\begin{table}[H]
-\caption{\textbf{Project Location}}
-\label{subsec:project-location}
-\begin{tabular}{|L{5.5cm}|L{8.5cm}|}
-\hline
-\tableheader \textbf{parameter} & \textbf{value} \\
-\hline
+""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Project Location""", label="subsec:project-location") + r"""
 \textnormal{Project Location} & """ + _tex(m.project_location) + r""" \\
 \hline
 \textnormal{Latitude / Longitude} & """ + (_render_value(input_dict,'latitude')) + ', ' + (_render_value(input_dict,'longitude')) + r""" \\
@@ -111,17 +105,10 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \hline
 \textnormal{Shade Temp. Max / Min (IRC 6)} & """ + (_render_value(input_dict,'shade_temp_max','')) + r""" °C / """ + (_render_value(input_dict,'shade_temp_min','')) + r""" °C \\
 \hline
-\end{tabular}
-\vspace{\tablegap}
-\end{table}
+\end{longtable}
 
-\begin{table}[H]
-\caption{\textbf{Bridge Geometry}}
-\label{subsec:bridge-geometry}
-\begin{tabular}{|L{5.5cm}|L{8.5cm}|}
-\hline
-\tableheader \textbf{parameter} & \textbf{value} \\
-\hline
+\vspace{\tablegap}
+""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Bridge Geometry""", label="subsec:bridge-geometry") + r"""
 \textnormal{Type of Structure} & """ + (_render_value(input_dict, KEY_STRUCTURE_TYPE)) + r""" \\
 \hline
 \textnormal{Span (m)} & """ + (_render_value(input_dict, KEY_SPAN, ' m')) + r""" \\
@@ -134,17 +121,10 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \hline
 \textnormal{Skew Angle (degrees)} & """ + (_render_value(input_dict, KEY_SKEW_ANGLE, '°')) + r""" (IRC 24 Cl. 504.8 limit: $\pm$15°) \\
 \hline
-\end{tabular}
-\end{table}
-\vspace{\tablegap}
+\end{longtable}
 
-\begin{table}[H]
-\caption{\textbf{Material Selection}}
-\label{subsec:material}
-\begin{tabular}{|L{5.5cm}|L{8.5cm}|}
-\hline
-\tableheader \textbf{parameter} & \textbf{value} \\
-\hline
+\vspace{\tablegap}
+""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Material Selection""", label="subsec:material") + r"""
 \textnormal{Girder Steel Grade (IS 2062)} & """ + (_render_value(input_dict, KEY_GIRDER)) + r""" \\
 \hline
 \textnormal{Cross Bracing Steel Grade} & """ + (_render_value(input_dict, KEY_CROSS_BRACING)) + r""" \\
@@ -153,8 +133,7 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \hline
 \textnormal{Concrete Deck Grade (IRC 22)} & """ + (_render_value(input_dict, KEY_DECK_CONCRETE_GRADE_BASIC)) + r""" \\
 \hline
-\end{tabular}
-\end{table}
+\end{longtable}
 
 \newpage
 \section{Additional Inputs}
