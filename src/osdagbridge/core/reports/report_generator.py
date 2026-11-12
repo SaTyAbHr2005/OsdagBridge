@@ -172,12 +172,7 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \usepackage{enumitem}
 \usepackage{caption}
 
-\captionsetup{
-    labelfont=bf,
-    justification=raggedright,
-    singlelinecheck=false,
-    format=plain
-}
+""" + styles.caption_setup() + r"""
 \usepackage{subcaption}
 \usepackage{multirow}
 \usepackage{colortbl}
@@ -193,6 +188,7 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \numberwithin{figure}{chapter}
 """ + styles.latex_definitions() + r"""
 """ + styles.page_styles(pn + r" $|$ " + jn, rd + r" $|$ " + rv) + r"""
+""" + styles.heading_formats() + r"""
 
 % Custom Commands
 \newcommand{\placeholder}[1]{\textit{\textless #1\textgreater}}
@@ -209,10 +205,6 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \renewcommand{\sdstar}{\textsuperscript{*}\markSD{}}
 \AddToHook{shipout/before}{\global\boolfalse{hasSDonPage}}
 
-\title{\Large\textbf{OsdagBridge} \\ \normalsize Open Source Software for Steel Girder Bridge Design \\ \vspace{2cm} \large Design Report}
-\author{}
-\date{}
-
 \begin{document}
 """
 
@@ -222,13 +214,15 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def title_page(m, osdag_logo, org_logo):
+    tp = styles.TITLE_PAGE
     if osdag_logo:
         lhs = r'\includegraphics[width=\linewidth,keepaspectratio]{' + osdag_logo.replace('\\', '/') + r'}'
     else:
         lhs = r'\textit{(Osdag Logo)}'
 
     if org_logo:
-        rhs = r'\includegraphics[width=\linewidth,height=2.2cm,keepaspectratio]{' + org_logo.replace('\\', '/') + r'}'
+        rhs = (r'\includegraphics[width=\linewidth,height=' + tp.org_logo_height
+               + r',keepaspectratio]{' + org_logo.replace('\\', '/') + r'}')
     else:
         rhs = r''
 
@@ -242,19 +236,19 @@ def title_page(m, osdag_logo, org_logo):
 \raggedleft
 """ + rhs + r"""
 \end{minipage}
-\\[1cm]
+\\[""" + tp.logo_gap + r"""]
 """
 
     return r"""
 \begin{titlepage}
 \thispagestyle{firstpage}
 \centering
-\vspace*{1.5cm}
+\vspace*{""" + tp.top_gap + r"""}
 """ + logos_tex + r"""
-{\Huge \textbf{OsdagBridge}}\\[0.3cm]
-{\large Open Source Software for Steel Girder Bridge Design}\\[1.5cm]
-{\Large Design Report}\\[1.5cm]
-\begin{tabular}{|L{4cm}|L{10cm}|}
+{""" + tp.name_size + r""" \textbf{OsdagBridge}}\\[""" + tp.name_gap + r"""]
+{""" + tp.tagline_size + r""" Open Source Software for Steel Girder Bridge Design}\\[""" + tp.block_gap + r"""]
+{""" + tp.document_type_size + r""" Design Report}\\[""" + tp.block_gap + r"""]
+\begin{tabular}{|L{""" + tp.label_width + r"""}|L{""" + tp.value_width + r"""}|}
 \hline
 \textbf{Project Name} & """ + _tex(m.project_name) + r""" \\
 \hline
@@ -285,33 +279,7 @@ def title_page(m, osdag_logo, org_logo):
 
 def toc_section():
     return r"""
-% Chapter / TOC Formatting
-\titleformat{\chapter}[block]
-  {\normalfont\Large\bfseries\centering}{\thechapter}{1em}{}
-\titlespacing*{\chapter}{0pt}{0pt}{10pt}
-\setcounter{tocdepth}{2}
-
-% TOC styling using titletoc
-\titlecontents{chapter}[1.5em]
-  {\normalfont\vspace{2pt}}
-  {\contentslabel{1.5em}}
-  {\hspace*{-1.5em}}
-  {\hfill\contentspage}
-
-\titlecontents{section}[3.8em]
-  {\normalfont}
-  {\contentslabel{2.3em}}
-  {\hspace*{-2.3em}}
-  {\hfill\contentspage}
-
-\titlecontents{subsection}[7.0em]
-  {\normalfont}
-  {\contentslabel{3.2em}}
-  {\hspace*{-3.2em}}
-  {\hfill\contentspage}
-
 \newpage
-\renewcommand{\contentsname}{\centering\Large\bfseries Table of Contents}
 \tableofcontents
 """
 

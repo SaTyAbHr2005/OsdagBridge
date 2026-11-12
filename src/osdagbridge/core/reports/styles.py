@@ -64,6 +64,30 @@ class SpacingScale:
 
 
 @dataclass(frozen=True)
+class Typography:
+    chapter_title: str = r"\Large\bfseries"
+    chapter_title_after: str = "10pt"
+    toc_title: str = r"\Large\bfseries"
+    toc_depth: int = 2
+    caption_label_font: str = "bf"
+    caption_justification: str = "raggedright"
+
+
+@dataclass(frozen=True)
+class TitlePageStyle:
+    top_gap: str = "1.5cm"
+    name_size: str = r"\Huge"
+    name_gap: str = "0.3cm"
+    tagline_size: str = r"\large"
+    document_type_size: str = r"\Large"
+    block_gap: str = "1.5cm"
+    logo_gap: str = "1cm"
+    org_logo_height: str = "2.2cm"
+    label_width: str = "4cm"
+    value_width: str = "10cm"
+
+
+@dataclass(frozen=True)
 class HeaderFooterStyle:
     footer_left: str = r"Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay"
     page_label: str = r"Page \thepage\ of \pageref{LastPage}"
@@ -75,6 +99,8 @@ PAGE = PageStyle()
 COLORS = Palette()
 TABLE = TableStyle()
 SPACING = SpacingScale()
+TYPOGRAPHY = Typography()
+TITLE_PAGE = TitlePageStyle()
 HEADER_FOOTER = HeaderFooterStyle()
 
 
@@ -124,6 +150,48 @@ def latex_definitions() -> str:
 \BeforeBeginEnvironment{{table}}{{\needspace{{{t.min_lines_before_break}\baselineskip}}}}
 \BeforeBeginEnvironment{{longtable}}{{\needspace{{{t.min_lines_before_break}\baselineskip}}}}
 """
+
+
+def caption_setup() -> str:
+    """Caption formatting shared by tables and figures."""
+    ty = TYPOGRAPHY
+    return rf"""\captionsetup{{
+    labelfont={ty.caption_label_font},
+    justification={ty.caption_justification},
+    singlelinecheck=false,
+    format=plain
+}}"""
+
+
+def heading_formats() -> str:
+    """Chapter heading and table of contents layout."""
+    ty = TYPOGRAPHY
+    # Each TOC level is indented by the previous level's indent plus its
+    # number width, so section and subsection numbers line up in columns.
+    return rf"""\titleformat{{\chapter}}[block]
+  {{\normalfont{ty.chapter_title}\centering}}{{\thechapter}}{{1em}}{{}}
+\titlespacing*{{\chapter}}{{0pt}}{{0pt}}{{{ty.chapter_title_after}}}
+\setcounter{{tocdepth}}{{{ty.toc_depth}}}
+
+\titlecontents{{chapter}}[1.5em]
+  {{\normalfont\vspace{{2pt}}}}
+  {{\contentslabel{{1.5em}}}}
+  {{\hspace*{{-1.5em}}}}
+  {{\hfill\contentspage}}
+
+\titlecontents{{section}}[3.8em]
+  {{\normalfont}}
+  {{\contentslabel{{2.3em}}}}
+  {{\hspace*{{-2.3em}}}}
+  {{\hfill\contentspage}}
+
+\titlecontents{{subsection}}[7.0em]
+  {{\normalfont}}
+  {{\contentslabel{{3.2em}}}}
+  {{\hspace*{{-3.2em}}}}
+  {{\hfill\contentspage}}
+
+\renewcommand{{\contentsname}}{{\centering{ty.toc_title} Table of Contents}}"""
 
 
 def _rule() -> str:
