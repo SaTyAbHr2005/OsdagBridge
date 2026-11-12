@@ -1,11 +1,12 @@
 """
 Layout and theme settings for the OsdagBridge design report.
 
-Chapter templates do not hard-code sizes, spacing or colours. They refer to
-the LaTeX names declared by ``latex_definitions()`` (``\\rowpad``,
-``\\tablegap``, ``\\statusfail{...}`` and so on), and the values behind those
-names are defined here. Changing a value in this module restyles every
-chapter in the report.
+Page geometry, the header and footer, table spacing and status colours are
+defined here and nowhere else. ``latex_definitions()`` turns them into named
+LaTeX lengths, colours and macros (``\\rowpad``, ``\\tablegap``,
+``\\statusfail{...}`` ...), and the chapter templates use those names rather
+than literal values. One-off spacing inside a single form layout stays with
+its template.
 """
 
 from dataclasses import dataclass
@@ -34,6 +35,8 @@ class Palette:
 
 @dataclass(frozen=True)
 class TableStyle:
+    # Column gaps, widest first: wide multi-column tables use compact,
+    # the BOM and standards tables tight, the analysis summary dense.
     col_sep: str = "6pt"
     col_sep_compact: str = "4pt"
     col_sep_tight: str = "3.5pt"
@@ -45,6 +48,8 @@ class TableStyle:
     block_gap: str = "1em"
     rule_width: str = "0.5pt"
     extra_row_height: str = "0.6pt"
+    # Space above and below every longtable; the caption already separates
+    # a table from the paragraph before it.
     longtable_pre: str = "0pt"
     longtable_post: str = "6pt"
     # A table starting with fewer lines than this left on the page moves to
@@ -67,10 +72,12 @@ HEADER_FOOTER = HeaderFooterStyle()
 
 
 def document_class() -> str:
+    """``\\documentclass`` line with the base font size and paper."""
     return rf"\documentclass[{PAGE.font_size},{PAGE.paper}]{{report}}"
 
 
 def geometry_package() -> str:
+    """``geometry`` package line with the page margins."""
     return (
         rf"\usepackage[{PAGE.paper}, top={PAGE.margin_top}, bottom={PAGE.margin_bottom}, "
         rf"left={PAGE.margin_left}, right={PAGE.margin_right}]{{geometry}}"
@@ -109,8 +116,8 @@ def latex_definitions() -> str:
 """
 
 
-def _rule(width: str = r"\headwidth") -> str:
-    return rf"\color{{osdagGreen}}\hrule width{width} height {HEADER_FOOTER.rule_thickness}"
+def _rule() -> str:
+    return rf"\color{{osdagGreen}}\hrule width \headwidth height {HEADER_FOOTER.rule_thickness}"
 
 
 def page_styles(header_left: str, header_right: str) -> str:
@@ -121,8 +128,8 @@ def page_styles(header_left: str, header_right: str) -> str:
     hf = HEADER_FOOTER
     footer = rf"""  \fancyfoot[L]{{{hf.footer_left}}}
   \fancyfoot[R]{{{hf.page_label}}}"""
-    # The footer rule grows upwards to make room for the "software default"
-    # note on pages that use a default value (see \markSD in the preamble).
+    # On pages that print a software default value (flagged by \markSD in the
+    # preamble), the explanatory note is set just above the footer rule.
     body = rf"""  \fancyhf{{}}
   \fancyhead[L]{{{header_left}}}
   \fancyhead[R]{{{header_right}}}
