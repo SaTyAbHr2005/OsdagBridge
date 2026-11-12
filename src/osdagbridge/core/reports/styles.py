@@ -55,7 +55,14 @@ class TableStyle:
     longtable_post: str = "6pt"
     # A table starting with fewer lines than this left on the page moves to
     # the next page instead of leaving its caption or first row stranded.
-    min_lines_before_break: int = 5
+    # A longtable needs room for caption, header, "Continued" foot and at
+    # least one row; with less, longtable sets only the foot on that page
+    # and the first header lands under the repeated one on the next page.
+    min_lines_before_table: int = 5
+    min_lines_before_longtable: int = 10
+    # Labels on tables that break across pages.
+    continued_caption: str = "(continued)"
+    continued_note: str = r"\small\itshape Continued on next page"
 
 
 @dataclass(frozen=True)
@@ -131,6 +138,24 @@ TITLE_PAGE = TitlePageStyle()
 HEADER_FOOTER = HeaderFooterStyle()
 
 
+_PAPER_WIDTH_CM = {"a4paper": 21.0}
+_UNIT_CM = {"cm": 1.0, "mm": 0.1, "in": 2.54, "pt": 2.54 / 72.27}
+
+
+def length_cm(value: str) -> float:
+    """Convert a LaTeX length such as ``1in``, ``4pt`` or ``2.5cm`` to centimetres."""
+    for unit, factor in _UNIT_CM.items():
+        if value.endswith(unit):
+            return float(value[: -len(unit)]) * factor
+    raise ValueError(f"Unsupported length: {value!r}")
+
+
+def text_width_cm() -> float:
+    """Width of the text block, i.e. the widest a table may be."""
+    return (_PAPER_WIDTH_CM[PAGE.paper]
+            - length_cm(PAGE.margin_left) - length_cm(PAGE.margin_right))
+
+
 def document_class() -> str:
     """``\\documentclass`` line with the base font size and paper."""
     return rf"\documentclass[{PAGE.font_size},{PAGE.paper}]{{report}}"
@@ -175,9 +200,10 @@ def latex_definitions() -> str:
 \newlength{{\colseptight}}\setlength{{\colseptight}}{{{t.col_sep_tight}}}
 \newlength{{\colsepdense}}\setlength{{\colsepdense}}{{{t.col_sep_dense}}}
 \newcommand{{\densearraystretch}}{{{t.array_stretch_dense}}}
+\newcommand{{\tablecontinuednote}}{{{t.continued_note}}}
 
-\BeforeBeginEnvironment{{table}}{{\needspace{{{t.min_lines_before_break}\baselineskip}}}}
-\BeforeBeginEnvironment{{longtable}}{{\needspace{{{t.min_lines_before_break}\baselineskip}}}}
+\BeforeBeginEnvironment{{table}}{{\needspace{{{t.min_lines_before_table}\baselineskip}}}}
+\BeforeBeginEnvironment{{longtable}}{{\needspace{{{t.min_lines_before_longtable}\baselineskip}}}}
 """
 
 
