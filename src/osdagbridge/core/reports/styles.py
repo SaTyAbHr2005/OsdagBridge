@@ -52,10 +52,14 @@ class TableStyle:
     col_sep_dense: str = "3pt"
     array_stretch: float = 1.12
     array_stretch_dense: float = 1.25
-    row_pad: str = "6pt"
-    row_pad_wide: str = "8pt"
+    # Cell padding: extra_row_height is added above the text of every row,
+    # row_pad below a row that ends in \\[\rowpad]. array measures that gap
+    # from the first line, so it only shows on single-line rows; the two are
+    # balanced so single-line text sits near the middle of its row.
+    row_pad: str = "4.5pt"
+    row_pad_wide: str = "6.5pt"
     rule_width: str = "0.5pt"
-    extra_row_height: str = "0.6pt"
+    extra_row_height: str = "2pt"
     # Space above and below every longtable; the caption already separates
     # a table from the paragraph before it.
     longtable_pre: str = "0pt"
