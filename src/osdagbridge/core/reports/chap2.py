@@ -94,7 +94,7 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 
 \noindent\textit{Note: These inputs are mandatory and were provided by the user.}
 
-""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Project Location""", label="subsec:project-location") + r"""
+""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\""", caption=r"""Project Location""", label="subsec:project-location") + r"""
 \textnormal{Project Location} & """ + _tex(m.project_location) + r""" \\
 \hline
 \textnormal{Latitude / Longitude} & """ + (_render_value(input_dict,'latitude')) + ', ' + (_render_value(input_dict,'longitude')) + r""" \\
@@ -108,7 +108,7 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \end{longtable}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Bridge Geometry""", label="subsec:bridge-geometry") + r"""
+""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\""", caption=r"""Bridge Geometry""", label="subsec:bridge-geometry") + r"""
 \textnormal{Type of Structure} & """ + (_render_value(input_dict, KEY_STRUCTURE_TYPE)) + r""" \\
 \hline
 \textnormal{Span (m)} & """ + (_render_value(input_dict, KEY_SPAN, ' m')) + r""" \\
@@ -124,7 +124,7 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \end{longtable}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Material Selection""", label="subsec:material") + r"""
+""" + longtable_begin(r"""|L{5.5cm}|L{8.5cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\""", caption=r"""Material Selection""", label="subsec:material") + r"""
 \textnormal{Girder Steel Grade (IS 2062)} & """ + (_render_value(input_dict, KEY_GIRDER)) + r""" \\
 \hline
 \textnormal{Cross Bracing Steel Grade} & """ + (_render_value(input_dict, KEY_CROSS_BRACING)) + r""" \\
@@ -143,7 +143,7 @@ Where the user has modified additional inputs, those values are reported here. W
 
 \vspace{\tablegap}
 
-""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Typical Section Details""") + r"""
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\""", caption=r"""Typical Section Details""") + r"""
 \textnormal{Overall Bridge Width (m)} & """ + (_render_value(input_dict, KEY_TS_OVERALL_WIDTH)) + r""" \\[\rowpad]
 \hline
 \textnormal{No. of Girders} & """ + (_render_value(input_dict, KEY_TS_NO_OF_GIRDERS)) + r""" \\[\rowpad]
@@ -162,7 +162,7 @@ Where the user has modified additional inputs, those values are reported here. W
 
 \vspace{\tablegap}
 
-""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Components Details""") + r"""
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\""", caption=r"""Components Details""") + r"""
 \textnormal{Crash Barrier Type} & """ + (_render_value(input_dict, KEY_CB_TYPE)) + r""" \\[\rowpad]
 \hline
 \textnormal{Crash Barrier Load (kN/m)} & """ + (_render_value(input_dict, KEY_CB_LOAD)) + r""" \\[\rowpad]
@@ -349,7 +349,7 @@ def _shear_connector_table(input_dict, output_dict=None):
 \label{subsec:shear-connectors}
 
 \vspace{\sectiongap}
-""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Shear Connector Details""") + r"""
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\""", caption=r"""Shear Connector Details""") + r"""
 \textnormal{Stud Diameter (mm)} & """ + (_render_value(od, KEY_SD_SHEAR_DIAMETER, ' mm')) + r""" \\[\rowpad]
 \hline
 \textnormal{Stud Height (mm)} & """ + (_render_value(od, KEY_SD_SHEAR_HEIGHT, ' mm')) + r""" \\[\rowpad]
@@ -371,7 +371,7 @@ def _safety_factors_table(input_dict):
 \noindent\textit{Note: All values are per IRC 22 Table 1 unless user-modified.}
 
 \vspace{\gapsmall}
-""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{parameter} & \textbf{value} \\""", caption=r"""Partial Safety Factors""") + r"""
+""" + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\""", caption=r"""Partial Safety Factors""") + r"""
 \textnormal{$\gamma_{M0}$ (Yielding / Buckling)} & """ + (_render_value(input_dict, KEY_DO_GAMMA_M0)) + r""" \\[\rowpad]
 \hline
 \textnormal{$\gamma_{M1}$ (Ultimate Stress)} & """ + (_render_value(input_dict, KEY_DO_GAMMA_M1)) + r""" \\[\rowpad]

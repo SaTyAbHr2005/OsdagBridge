@@ -381,7 +381,7 @@ def ch5_design_checks(checks_data, bridge) -> str:
         t58_block = r"""
 \vspace{\tablegap}
 
-""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{} & \textbf{Check} & \textbf{Required} & \textbf{Provided} & \textbf{Status} \\[\rowpad]""", caption=r"""Intermediate Stiffener Checks""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Check} & \textbf{Required} & \textbf{Provided} & \textbf{Status} \\[\rowpad]""", caption=r"""Intermediate Stiffener Checks""") + r"""
 """ + t58_content + r"""
 \end{longtable}
 \noindent\textit{Note: IS 800 Cl. 8.7.1.2}
@@ -1096,31 +1096,31 @@ This section presents all structural design checks performed by OsdagBridge. For
 \end{longtable}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.5cm}|L{3cm}|C{3.5cm}|C{2.5cm}|>{\centering\arraybackslash}p{4.0cm}|""", r"""\tableheader \textbf{} & \textbf{Element} & \textbf{Slenderness Ratio} & \textbf{Class Limit} & \textbf{Classification} \\[\rowpad]""", caption=r"""Girder Section Classification""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|L{3cm}|C{3.5cm}|C{2.5cm}|>{\centering\arraybackslash}p{4.0cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Element} & \textbf{Slenderness Ratio} & \textbf{Class Limit} & \textbf{Classification} \\[\rowpad]""", caption=r"""Girder Section Classification""") + r"""
 """ + t52_content + r"""
 \end{longtable}
 \noindent\textit{Note: IS 800:2007 Table 2}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{} & \textbf{Parameter} & \textbf{Formula} & \textbf{Value} & \textbf{Status} \\[\rowpad]""", caption=r"""Moment Capacity Check""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Parameter} & \textbf{Formula} & \textbf{Value} & \textbf{Status} \\[\rowpad]""", caption=r"""Moment Capacity Check""") + r"""
 """ + t53_content + r"""
 \end{longtable}
 \noindent\textit{Note: IRC 22 Cl. 603.3.1, IS 800 Cl. 8.2.1}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{} & \textbf{Parameter} & \textbf{Formula} & \textbf{Value} & \textbf{Status} \\[\rowpad]""", caption=r"""Shear Capacity Check""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Parameter} & \textbf{Formula} & \textbf{Value} & \textbf{Status} \\[\rowpad]""", caption=r"""Shear Capacity Check""") + r"""
 """ + t54_content + r"""
 \end{longtable}
 \noindent\textit{Note: IS 800 Cl. 8.4, IRC 22 Cl. 603.3.3.2}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{} & \textbf{Check} & \textbf{Condition} & \textbf{Value} & \textbf{Status} \\[\rowpad]""", caption=r"""Interaction Checks (M-V and M-N)""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Check} & \textbf{Condition} & \textbf{Value} & \textbf{Status} \\[\rowpad]""", caption=r"""Interaction Checks (M-V and M-N)""") + r"""
 """ + t55_content + r"""
 \end{longtable}
 \noindent\textit{Note: IRC 22 Cl. 603.3.3.3}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{} & \textbf{Parameter} & \textbf{Formula} & \textbf{Value} & \textbf{Status} \\[\rowpad]""", caption=r"""Lateral Torsional Buckling Check -- Construction Stage""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Parameter} & \textbf{Formula} & \textbf{Value} & \textbf{Status} \\[\rowpad]""", caption=r"""Lateral Torsional Buckling Check -- Construction Stage""") + r"""
 """ + t56_content + r"""
 \end{longtable}
 \noindent\textit{Note: IRC 22 Cl. 603.3.3.1, IS 800 Cl. 8.2.2}
@@ -1132,24 +1132,24 @@ This section presents all structural design checks performed by OsdagBridge. For
 """ + t58_block + r"""
 \vspace{\tablegap}
 
-""" + longtable_begin(r"""|C{2.5cm}|L{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{} & \textbf{Check} & \textbf{Required} & \textbf{Provided} & \textbf{Status} \\[\rowpad]""", caption=r"""End Panel Stiffener Checks""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|L{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Check} & \textbf{Required} & \textbf{Provided} & \textbf{Status} \\[\rowpad]""", caption=r"""End Panel Stiffener Checks""") + r"""
 """ + t59_content + r"""
 \end{longtable}
 \noindent\textit{Note: IS 800 Cl. 8.4.2.2}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.5cm}|L{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|C{2.5cm}|""", r"""\tableheader \textbf{} & \textbf{Check} & \textbf{Allowable} & \textbf{Actual} & \textbf{Status} \\[\rowpad]""", caption=r"""Serviceability -- Deflection Checks""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|L{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|C{2.5cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Check} & \textbf{Allowable} & \textbf{Actual} & \textbf{Status} \\[\rowpad]""", caption=r"""Serviceability -- Deflection Checks""") + r"""
 """ + t510_content + r"""
 \end{longtable}
 \noindent\textit{Note: IRC 22 Cl. 604.3.2}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.5cm}|L{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|C{2.5cm}|""", r"""\tableheader \textbf{} & \textbf{Element} & \textbf{Allowable Stress} & \textbf{Actual Stress} & \textbf{Status} \\[\rowpad]""", caption=r"""Serviceability -- Maximum Stress Limitation""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|L{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|C{2.5cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Element} & \textbf{Allowable Stress} & \textbf{Actual Stress} & \textbf{Status} \\[\rowpad]""", caption=r"""Serviceability -- Maximum Stress Limitation""") + r"""
 """ + t511_content + r"""
 \end{longtable}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|C{2.5cm}|""", r"""\tableheader \textbf{} & \textbf{Stress Range, $\Delta\sigma$ (MPa)} & \textbf{Fatigue Limit, $f_{fd}$ (MPa)} & \textbf{Utilization Ratio} & \textbf{Status} \\[\rowpad]""", caption=r"""Serviceability -- Fatigue Assessment""") + r"""
+""" + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|C{2.5cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Stress Range, $\Delta\sigma$ (MPa)} & \textbf{Fatigue Limit, $f_{fd}$ (MPa)} & \textbf{Utilization Ratio} & \textbf{Status} \\[\rowpad]""", caption=r"""Serviceability -- Fatigue Assessment""") + r"""
 """ + t512_content + r"""
 \end{longtable}
 \noindent\textit{Note: IRC 22 Cl. 605 --- governing of normal and shear fatigue (worst by DCR). Capacity reduction factor $\mu_r$ applied where plate thickness > 25 mm.}
