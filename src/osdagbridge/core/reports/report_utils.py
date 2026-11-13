@@ -22,6 +22,9 @@ def _tex(value):
                     ('_', r'\_\allowbreak{}'),            
                     ('~', r'\textasciitilde{}'), ('^', r'\^{}')]:
         s = s.replace(ch, esc)
+    # Check names from the design modules use these signs; pdflatex stops
+    # with an error on them as text, so they go in as math.
+    s = s.replace('≤', r'$\le$').replace('≥', r'$\ge$')
     s = s.replace(':', r':\allowbreak{}')
     return s
 
