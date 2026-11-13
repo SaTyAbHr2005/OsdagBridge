@@ -100,10 +100,12 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 >{\centering\arraybackslash}p{1.6cm}|""", r"""\tableheader
 & \multicolumn{3}{c|}{\textbf{Bending Moment}}
 & \multicolumn{3}{c|}{\textbf{Shear Force}}
-& \multicolumn{2}{c|}{\textbf{Reaction at Supports}}\\
-\cline{2-9}
+& \multicolumn{2}{c|}{\textbf{Reactions (kN)}}\\
+% \cline would be painted over by the shading of the next header row;
+% hhline draws the rule in its own row and keeps column 1 shaded.
+\hhline{|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|-|-|-|-|-|-|-|-|}
 
-\tableheader \multirow{-2}{*}{\makecell{\textbf{Load}\\\textbf{Case/}\\\textbf{Comb.}}}
+\tableheader \multirow{-2}{*}{\makecell{\textbf{Load Case /}\\\textbf{Combination}}}
 & \makecell{\textbf{Max}\\\textbf{(kNm)}}
 & \textbf{Girder}
 & \makecell{\textbf{Loc.}\\\textbf{(m)}}
