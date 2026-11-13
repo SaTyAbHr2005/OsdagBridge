@@ -20,6 +20,13 @@ class PageStyle:
     margin_bottom: str = "1in"
     margin_left: str = "1in"
     margin_right: str = "1in"
+    # Tall enough for the running header and its rule; fancyhdr warns and
+    # shifts the header on every page when it is smaller.
+    head_height: str = "18pt"
+    # Distance from the last text line to the footer baseline. The footer
+    # rule sits just above the footer text (see page_styles), so it stays
+    # well clear of a table ending at the bottom of the page.
+    foot_skip: str = "30pt"
     line_stretch: float = 1.15
 
 
@@ -166,7 +173,8 @@ def geometry_package() -> str:
     """``geometry`` package line with the page margins."""
     return (
         rf"\usepackage[{PAGE.paper}, top={PAGE.margin_top}, bottom={PAGE.margin_bottom}, "
-        rf"left={PAGE.margin_left}, right={PAGE.margin_right}]{{geometry}}"
+        rf"left={PAGE.margin_left}, right={PAGE.margin_right}, "
+        rf"headheight={PAGE.head_height}, footskip={PAGE.foot_skip}]{{geometry}}"
     )
 
 
@@ -262,25 +270,18 @@ def page_styles(header_left: str, header_right: str) -> str:
     ``header_left`` and ``header_right`` must already be LaTeX-escaped.
     """
     hf = HEADER_FOOTER
-    footer = rf"""  \fancyfoot[L]{{{hf.footer_left}}}
-  \fancyfoot[R]{{{hf.page_label}}}"""
     # On pages that print a software default value (flagged by \markSD in the
-    # preamble), the explanatory note is set just above the footer rule.
+    # preamble) the explanatory note hangs below the footer line, so it can
+    # never collide with text or a table at the bottom of the page.
+    footer = rf"""  \fancyfoot[L]{{{hf.footer_left}\ifbool{{hasSDonPage}}{{\\[-2pt]%
+    \textcolor{{black}}{{\footnotesize\itshape {hf.default_value_note}}}}}{{}}}}
+  \fancyfoot[R]{{{hf.page_label}}}
+  \renewcommand{{\footrule}}{{\vspace{{-8pt}}{_rule()}}}"""
     body = rf"""  \fancyhf{{}}
   \fancyhead[L]{{{header_left}}}
   \fancyhead[R]{{{header_right}}}
 {footer}
-  \renewcommand{{\headrule}}{{{_rule()} \vspace{{2pt}}}}
-  \renewcommand{{\footrule}}{{%
-    \ifbool{{hasSDonPage}}{{%
-      \vspace{{-20pt}}%
-      \hbox to \headwidth{{\textcolor{{black}}{{\footnotesize\textit{{{hf.default_value_note}}}}}\hfil}}%
-      \vspace{{4pt}}%
-    }}{{%
-      \vspace{{-8pt}}%
-    }}%
-    {_rule()} \vspace{{6pt}}%
-  }}"""
+  \renewcommand{{\headrule}}{{{_rule()} \vspace{{2pt}}}}"""
     return rf"""\fancypagestyle{{main}}{{
 {body}
 }}
@@ -291,7 +292,6 @@ def page_styles(header_left: str, header_right: str) -> str:
   \fancyhf{{}}
   \renewcommand{{\headrulewidth}}{{0pt}}
 {footer}
-  \renewcommand{{\footrule}}{{\vspace{{-8pt}}{_rule()} \vspace{{6pt}}}}
 }}
 \pagestyle{{main}}
 \setstretch{{{PAGE.line_stretch}}}"""
