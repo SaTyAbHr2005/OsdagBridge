@@ -211,6 +211,16 @@ def latex_definitions() -> str:
 \newcommand{{\densearraystretch}}{{{t.array_stretch_dense}}}
 \newcommand{{\tablecontinuednote}}{{{t.continued_note}}}
 
+% Partial rule between the rows of one group (one girder, one bracing pair).
+% \cline allows a page break right after it; this copy does not, so a group
+% whose rows end in \\* stays on one page.
+\makeatletter
+\let\osdag@groupcline\@cline
+\patchcmd{{\osdag@groupcline}}{{\vskip-\arrayrulewidth}}{{\nobreak\vskip-\arrayrulewidth}}{{}}
+  {{\PackageWarning{{osdagbridge}}{{\string\groupcline\space could not be patched}}}}
+\newcommand{{\groupcline}}[1]{{\osdag@groupcline#1\@nil}}
+\makeatother
+
 \BeforeBeginEnvironment{{table}}{{\needspace{{{t.min_lines_before_table}\baselineskip}}}}
 """
 

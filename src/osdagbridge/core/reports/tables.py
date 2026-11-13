@@ -49,6 +49,21 @@ def fit_to_text_width(spec: str, col_sep: str = TABLE.col_sep) -> str:
     return _WIDTH.sub(lambda m: f"{m.group(1)}{{{float(m.group(2)) * scale:.2f}cm}}", spec)
 
 
+def group_rows(label: str, rows: list[str], n_cols: int) -> str:
+    """Rows of one group, e.g. the members of one bracing pair, kept on one page.
+
+    label   first-column text spanning all rows, already LaTeX-escaped
+    rows    row bodies from the second column on, each starting with ``&``
+            and without the closing ``\\\\``
+    n_cols  number of table columns
+    """
+    if not rows:
+        return ""
+    inner_rule = " \\\\*[\\rowpad]\n\\groupcline{2-" + str(n_cols) + "}\n"
+    return (r"\multirow{" + str(len(rows)) + r"}{*}{\makecell{" + label + "}} "
+            + inner_rule.join(rows) + " \\\\[\\rowpad]\n\\hline")
+
+
 def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
                     col_sep: str = TABLE.col_sep) -> str:
     """LaTeX from ``\\begin{longtable}`` down to ``\\endlastfoot``.
