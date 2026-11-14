@@ -188,7 +188,8 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \numberwithin{table}{chapter}
 \numberwithin{figure}{chapter}
 """ + styles.latex_definitions() + r"""
-""" + styles.page_styles(pn + r" $|$ " + jn, rd + r" $|$ " + rv) + r"""
+""" + styles.page_styles(r" $|$ ".join(p for p in (pn, jn) if p),
+                         r" $|$ ".join(p for p in (rd, rv) if p)) + r"""
 """ + styles.heading_formats() + r"""
 
 % Custom Commands
