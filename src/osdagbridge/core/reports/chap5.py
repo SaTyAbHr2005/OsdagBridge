@@ -391,17 +391,24 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
         )
     t56_content = "\n".join(t56_rows)
 
-    # Generate Table 5.7 rows
+    # Generate Table 5.7 rows. In Optimized mode the backend fills the sizes
+    # with the designer's minimum requirements, not provided plates.
+    _stiff_req = "" if str(bridge.input_dict.get(KEY_DESIGN_MODE, "Optimized")).strip().lower() in {
+        "custom", "customized"} else ", required"
+
+    def _stiff(key):
+        return _render_value(bridge.output_dict, key) or "---"
+
     t57_rows = []
     for lbl, _ in girder_entries:
         t57_rows.append(
             r"\multirow{6}{*}{\makecell{" + lbl + r"""}} & \textnormal{Shear Buckling Design Method} & """ + _render_value(bridge.output_dict, KEY_SD_STIFF_METHOD) + r""" \\*[\rowpad]
 \groupcline{2-3}
- & \textnormal{Intermediate Stiffener Thickness (mm)} & """ + _render_value(bridge.output_dict, KEY_SD_STIFF_INT_THICK) + r""" \\*[\rowpad]
+ & \textnormal{Intermediate Stiffener Thickness""" + _stiff_req + r""" (mm)} & """ + _stiff(KEY_SD_STIFF_INT_THICK) + r""" \\*[\rowpad]
 \groupcline{2-3}
- & \textnormal{Intermediate Stiffener Spacing (mm)} & """ + _render_value(bridge.output_dict, KEY_SD_STIFF_INT_SPACING) + r""" \\*[\rowpad]
+ & \textnormal{Intermediate Stiffener Spacing""" + _stiff_req + r""" (mm)} & """ + _stiff(KEY_SD_STIFF_INT_SPACING) + r""" \\*[\rowpad]
 \groupcline{2-3}
- & \textnormal{End Panel Stiffener Thickness (mm)} & """ + _render_value(bridge.output_dict, KEY_SD_STIFF_END_THICK) + r""" \\*[\rowpad]
+ & \textnormal{End Panel Stiffener Thickness""" + _stiff_req + r""" (mm)} & """ + _stiff(KEY_SD_STIFF_END_THICK) + r""" \\*[\rowpad]
 \groupcline{2-3}
  & \textnormal{No. of End Panel Stiffeners} & """ + _render_value(bridge.output_dict, KEY_SD_STIFF_END_COUNT) + r""" \\*[\rowpad]
 \groupcline{2-3}
