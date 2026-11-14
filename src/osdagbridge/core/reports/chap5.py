@@ -3,7 +3,9 @@
 # Extracted from report_generator.py — DO NOT add business logic here.
 # =============================================================================
 from __future__ import annotations
-from typing import TYPE_CHECKING
+import math
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional
 
 from osdagbridge.core.utils.common import (
     KEY_DD_AS_BOT,
@@ -146,6 +148,24 @@ from .tables import group_rows, longtable_begin
 
 if TYPE_CHECKING:
     pass
+
+
+# Element groups of the Section 5.5 summary, in table order.
+SUMMARY_GROUPS = ("Plate Girders", "Deck Slab", "Cross Bracing", "End Diaphragms")
+
+
+@dataclass(frozen=True)
+class SummaryRow:
+    """One row of the Overall Design Check Summary (Section 5.5)."""
+    group: str                      # element group, e.g. "Plate Girders"
+    label: str                      # Member / Check cell (LaTeX)
+    combo: str = "---"
+    demand: str = "---"
+    capacity: str = "---"
+    ur: Optional[float] = None
+    message: Optional[str] = None   # replaces the data cells when there is no check
+
+
 def ch5_design_checks(checks_data, bridge) -> str:
     """Chapter 5 — Design Checks.
 
@@ -936,7 +956,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         if best is not None:
             d, dem, cap, du, cu, g = best
             return (_gov_lc_in_522(g, check_ids),
-                    _vu_522(dem, du) or "---", _vu_522(cap, cu) or "---", _ur_522(d) or "---")
+                    _vu_522(dem, du) or "---", _vu_522(cap, cu) or "---", d)
         # Fallback: per_lc (no units) for SLS-conditional checks (e.g. deflection).
         best = None  # (dcr, demand, capacity, lc)
         for g, gd in _pg_522.items():
@@ -951,11 +971,10 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
                         if best is None or d > best[0]:
                             best = (d, chk.get("demand"), chk.get("capacity"), _lc)
         if best is None:
-            return ("---", "---", "---", "---")
+            return ("---", "---", "---", None)
         d, dem, cap, _lc = best
         return (_lc_short(_lc),
-                _vu_522(dem, fallback_unit) or "---", _vu_522(cap, fallback_unit) or "---",
-                _ur_522(d) or "---")
+                _vu_522(dem, fallback_unit) or "---", _vu_522(cap, fallback_unit) or "---", d)
 
     # (3) Cross bracing — worst pair/member by UR for the given force type.
     _cb_pairs_522 = bridge.get_cb_pairs()
@@ -973,12 +992,12 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
                 if best is None or ur > best[0]:
                     best = (ur, pair, member, cap)
         if best is None:
-            return ("---", "---", "---", "---")
+            return ("---", "---", "---", None)
         ur, pair, member, cap = best
         gov = data.get_cb_gov_lc(pair, member, force_type) or "---"
         dem = f"{float(cap) * ur:.2f} kN" if cap else "---"
         cap_s = (cap + " kN") if cap else "---"
-        return (gov, dem, cap_s, _ur_522(ur))
+        return (gov, dem, cap_s, ur)
 
     def _cb_slender_row():
         best = None  # (ratio, slend, limit)
@@ -994,13 +1013,26 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
                 if best is None or ratio > best[0]:
                     best = (ratio, sf, lim)
         if best is None:
-            return ("---", "---", "---", "---")
+            return ("---", "---", "---", None)
         ratio, sf, lim = best
-        return ("---", f"{sf:.1f}", f"{lim:.0f}", _ur_522(ratio))
+        return ("---", f"{sf:.1f}", f"{lim:.0f}", ratio)
 
-    def _row522(label, cells):
-        c = [x if x else "---" for x in cells]
-        return label + r" & " + r" & ".join(c) + r" \\[\rowpad]" + "\n\\hline"
+    PG, DECK, CB, ED = SUMMARY_GROUPS
+
+    def _summary(group, label, cells):
+        combo, demand, capacity, ur = cells
+        # A NaN or infinite DCR from the design engine is shown as missing.
+        if ur is not None and not math.isfinite(ur):
+            ur = None
+        return SummaryRow(group, label, combo or "---", demand or "---", capacity or "---", ur)
+
+    def _row522(row):
+        if row.message:
+            cells = r"\multicolumn{4}{c|}{" + row.message + "}"
+        else:
+            ur = _ur_522(row.ur) if row.ur is not None else "---"
+            cells = r" & ".join((row.combo, row.demand, row.capacity, ur))
+        return row.label + r" & " + cells + r" \\[\rowpad]" + "\n\\hline"
 
     # Deck rows: Demand/Capacity from deck_report_values (KEY_DD_*, the same dict
     # the 5.17 tables use); UR = Demand/Capacity. The deck is designed for the
@@ -1010,30 +1042,28 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         r"Basic ULS: " + _tex(f"{_dkv(KEY_DD_GAMMA_DL):g}DL + {_dkv(KEY_DD_GAMMA_LL):g}LL")
     ) if _dk_has else "---"
 
-    def _deck_row(dem_key, cap_key, unit, is_oh=False):
+    def _deck_row(dem_key, cap_key, unit):
         if not _dk_has:
-            return ("---", "---", "---", "---")
-        if is_oh and not _dk_oh:
-            return (_deck_combo, "N/A", "N/A", "N/A")
+            return ("---", "---", "---", None)
         dem = _dkv(dem_key)
         cap = _dkv(cap_key)
         ur = (dem / cap) if cap > 0 else None
-        return (_deck_combo, f"{dem:.2f} {unit}", f"{cap:.2f} {unit}", _ur_522(ur))
-
-    def _row522_msg(label, msg):
-        # Single message spanning the 4 data columns.
-        return label + r" & \multicolumn{4}{c|}{" + msg + r"} \\[\rowpad]" + "\n\\hline"
+        return (_deck_combo, f"{dem:.2f} {unit}", f"{cap:.2f} {unit}", ur)
 
     # End diaphragms designed as bracing carry axial force, so they are
     # summarised like the cross bracing but from their own design results.
     # Rolled / welded beam end diaphragms have no design check yet.
     if ed_is_bracing:
-        _ed_first_row  = _row522(r"End Diaphragm --- Compression", _cb_row("compression", ed_data))
-        _ed_second_row = _row522(r"End Diaphragm --- Tension",     _cb_row("tension", ed_data))
+        _ed_rows = [
+            _summary(ED, r"End Diaphragm --- Compression", _cb_row("compression", ed_data)),
+            _summary(ED, r"End Diaphragm --- Tension",     _cb_row("tension", ed_data)),
+        ]
     else:
         _ed_msg = r"Rolled / Welded section --- design to be added"
-        _ed_first_row  = _row522_msg(r"End Diaphragm --- Moment", _ed_msg)
-        _ed_second_row = _row522_msg(r"End Diaphragm --- Shear",  _ed_msg)
+        _ed_rows = [
+            SummaryRow(ED, r"End Diaphragm --- Moment", message=_ed_msg),
+            SummaryRow(ED, r"End Diaphragm --- Shear",  message=_ed_msg),
+        ]
 
     # Crack width (slab): governing crack width vs limit from the deck designer
     # (frequent SLS combination). _dk_gov_wk is the max of bottom/top/overhang wk.
@@ -1057,30 +1087,35 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         (_gov_sls_frequent() if _dk_has else "---"),
         (f"{_dk_gov_wk:.3f} mm" if _dk_has else "---"),
         (f"{_wk_lim:.3f} mm" if _dk_has else "---"),
-        (_ur_522(_dk_gov_wk / _wk_lim) if (_dk_has and _wk_lim > 0) else "---"),
+        (_dk_gov_wk / _wk_lim if (_dk_has and _wk_lim > 0) else None),
     )
 
-    _t522 = [
-        _row522(r"Girder --- Moment",             _dcr_row({1})),
-        _row522(r"Girder --- Shear",              _dcr_row({2})),
-        _row522(r"Girder --- LTB (constr.)",      _dcr_row({5})),
-        _row522(r"Girder --- Deflection",         _dcr_row({13, 14}, fallback_unit="mm")),
-        _row522(r"Girder --- Stress",             _dcr_row({11}, fallback_unit="MPa")),
-        _row522(r"Girder --- Fatigue",            _dcr_row({8, 9}, fallback_unit="MPa")),
-        _row522(r"Transverse Shear (slab)",       _dcr_row({16})),
-        _row522(r"Crack Width (slab)",            _crack_cells),
-        _row522(r"Deck --- Flexure (sagging)",    _deck_row(KEY_DD_M_ULS_SAG, KEY_DD_MU_BOT, "kN-m/m")),
-        _row522(r"Deck --- Flexure (hogging)",    _deck_row(KEY_DD_M_ULS_HOG, KEY_DD_MU_TOP, "kN-m/m")),
-        _row522(r"Deck --- Cantilever Overhang",  _deck_row(KEY_DD_M_ULS_OH, KEY_DD_MU_OH, "kN-m/m", is_oh=True)),
-        _row522(r"Deck --- Punching Shear",       _deck_row(KEY_DD_PUNCH_VED, KEY_DD_VRD_C_MPA, "MPa")),
-        _row522(r"Deck --- One-Way Shear",        _deck_row(KEY_DD_SHEAR_VED, KEY_DD_SHEAR_VRDC, "kN/m")),
-        _row522(r"Cross Bracing --- Compression", _cb_row("compression", bridge)),
-        _row522(r"Cross Bracing --- Tension",     _cb_row("tension", bridge)),
-        _row522(r"Cross Bracing --- Slenderness", _cb_slender_row()),
-        _ed_first_row,
-        _ed_second_row,
+    _overhang_label = r"Deck --- Cantilever Overhang"
+    if _dk_has and not _dk_oh:
+        _overhang_row = SummaryRow(DECK, _overhang_label, message="N/A (no cantilever overhang)")
+    else:
+        _overhang_row = _summary(DECK, _overhang_label, _deck_row(KEY_DD_M_ULS_OH, KEY_DD_MU_OH, "kN-m/m"))
+
+    summary_rows = [
+        _summary(PG,   r"Girder --- Moment",             _dcr_row({1})),
+        _summary(PG,   r"Girder --- Shear",              _dcr_row({2})),
+        _summary(PG,   r"Girder --- LTB (constr.)",      _dcr_row({5})),
+        _summary(PG,   r"Girder --- Deflection",         _dcr_row({13, 14}, fallback_unit="mm")),
+        _summary(PG,   r"Girder --- Stress",             _dcr_row({11}, fallback_unit="MPa")),
+        _summary(PG,   r"Girder --- Fatigue",            _dcr_row({8, 9}, fallback_unit="MPa")),
+        _summary(DECK, r"Transverse Shear (slab)",       _dcr_row({16})),
+        _summary(DECK, r"Crack Width (slab)",            _crack_cells),
+        _summary(DECK, r"Deck --- Flexure (sagging)",    _deck_row(KEY_DD_M_ULS_SAG, KEY_DD_MU_BOT, "kN-m/m")),
+        _summary(DECK, r"Deck --- Flexure (hogging)",    _deck_row(KEY_DD_M_ULS_HOG, KEY_DD_MU_TOP, "kN-m/m")),
+        _overhang_row,
+        _summary(DECK, r"Deck --- Punching Shear",       _deck_row(KEY_DD_PUNCH_VED, KEY_DD_VRD_C_MPA, "MPa")),
+        _summary(DECK, r"Deck --- One-Way Shear",        _deck_row(KEY_DD_SHEAR_VED, KEY_DD_SHEAR_VRDC, "kN/m")),
+        _summary(CB,   r"Cross Bracing --- Compression", _cb_row("compression", bridge)),
+        _summary(CB,   r"Cross Bracing --- Tension",     _cb_row("tension", bridge)),
+        _summary(CB,   r"Cross Bracing --- Slenderness", _cb_slender_row()),
+        *_ed_rows,
     ]
-    t522_content = "\n".join(_t522)
+    t522_content = "\n".join(_row522(row) for row in summary_rows)
 
     return r"""
 \chapter{Design Checks}
