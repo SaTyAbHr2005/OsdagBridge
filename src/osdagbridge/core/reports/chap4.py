@@ -46,7 +46,8 @@ def ch4_analysis(asum, fig_paths, bridge: "ReportDataBridge", span_m: float):
 
     def _fmt(val, nd=3):
         try:
-            return f"{float(val):.{nd}f}"
+            # + 0.0 turns a value that rounds to -0 into 0, so no "-0.000".
+            return f"{round(float(val), nd) + 0.0:.{nd}f}"
         except (TypeError, ValueError):
             return r"---"
 
