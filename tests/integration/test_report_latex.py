@@ -6,6 +6,7 @@ import subprocess
 
 import pytest
 
+from osdagbridge.core.reports.chap8 import design_log_chapter
 from osdagbridge.core.reports.charts import ur_bar_chart
 from osdagbridge.core.reports.executive_summary import executive_summary
 from osdagbridge.core.reports.report_generator import ReportMetadata, preamble, title_page
@@ -46,6 +47,9 @@ def _document(chart_path):
             r"\section{Overall Design Check Summary}\label{sec:overall-summary}" "\n"
             + table + r"Failing: \statusfail{FAIL}, see Table~\ref{tab:long}." "\n"
             + _fig_embed(chart_path.replace("\\", "/"), "Utilization Ratios --- Plate Girders") + "\n"
+            # Real log lines start with a [hh:mm:ss] stamp.
+            + design_log_chapter(["[10:00:01]   Stage 1: input_validation complete",
+                                  "[10:00:02]   WARNING : deck overhang > 1.5 m & 50% wider"]) + "\n"
             r"\end{document}" "\n")
 
 

@@ -3,6 +3,7 @@
 import random
 
 from osdagbridge.core.reports.chap3 import _wearing_course_load
+from osdagbridge.core.reports.chap8 import design_log_chapter
 from osdagbridge.core.reports.chap4 import _load_case_order
 from osdagbridge.core.reports.executive_summary import _deck_check_name, _readable_check, executive_summary
 from osdagbridge.core.utils.common import (
@@ -60,3 +61,11 @@ def test_wearing_course_load_gives_the_surface_load():
     text = _wearing_course_load({KEY_WC_MATERIAL: "Concrete", KEY_WC_THICKNESS: 50.0, KEY_WC_DENSITY: 24.0})
     assert text.startswith("Concrete, 50 mm thick at 24 kN/m") and text.endswith("= 1.20 kN/m\\textsuperscript{2}")
     assert _wearing_course_load({KEY_WC_MATERIAL: "Concrete", KEY_WC_THICKNESS: "nan", KEY_WC_DENSITY: 24}) == "Concrete"
+
+
+def test_design_log_lists_every_line_coloured_by_level():
+    tex = design_log_chapter(["[10:00:01]   Stage 1 complete\n\n[10:00:02]   WARNING : wide overhang"])
+    assert tex.count(r"\par") == 2
+    assert r"\textcolor{statusPass}{[10:" in tex
+    assert r"\textcolor{logWarning}{[10:" in tex
+    assert design_log_chapter([]) == ""
