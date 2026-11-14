@@ -278,7 +278,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     try:
         _flex_ur = float(bridge.output_dict.get(KEY_UTIL_FLEXURE)) / 100.0
         _flex_ur_str = f"{_flex_ur:.2f}"
-        _flex_status = "PASS" if _flex_ur <= 1.0 else r"\statusfail{FAIL}"
+        _flex_status = r"\statuspass{PASS}" if _flex_ur <= 1.0 else r"\statusfail{FAIL}"
     except (TypeError, ValueError):
         _flex_ur_str = ""
         _flex_status = "---"
@@ -300,7 +300,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     try:
         _shear_ur = float(bridge.output_dict.get(KEY_UTIL_SHEAR)) / 100.0
         _shear_ur_str = f"{_shear_ur:.2f}"
-        _shear_status = "PASS" if _shear_ur <= 1.0 else r"\statusfail{FAIL}"
+        _shear_status = r"\statuspass{PASS}" if _shear_ur <= 1.0 else r"\statusfail{FAIL}"
     except (TypeError, ValueError):
         _shear_ur_str = ""
         _shear_status = "---"
@@ -330,7 +330,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     # Interaction DCRs use the engine bands: PASS <0.90, WARN <1.00, FAIL ≥1.00.
     def _interaction_status(ratio):
         if ratio < 0.90:
-            return "PASS"
+            return r"\statuspass{PASS}"
         elif ratio < 1.00:
             return "WARN"
         return r"\statusfail{FAIL}"
@@ -421,7 +421,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     # Status: PASS when Provided ≥ Required.
     def _ge_status(provided, required):
         try:
-            return "PASS" if float(provided) >= float(required) else r"\statusfail{FAIL}"
+            return r"\statuspass{PASS}" if float(provided) >= float(required) else r"\statusfail{FAIL}"
         except (TypeError, ValueError):
             return "---"
     _iys_status = _ge_status(bridge.output_dict.get(KEY_SD_IS_IYS_PROV),
@@ -467,7 +467,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
             return ("N/A", "N/A", "N/A")
         req_s  = f"{_bs_r} kN"
         prov_s = f"{prov} kN"
-        status = "PASS" if float(prov) >= float(_bs_r) else r"\statusfail{FAIL}"
+        status = r"\statuspass{PASS}" if float(prov) >= float(_bs_r) else r"\statusfail{FAIL}"
         return (req_s, prov_s, status)
     _wb_req, _wb_prov, _wb_st = _bs_check(KEY_SD_BS_FCDW_WB)
     _lc_req, _lc_prov, _lc_st = _bs_check(KEY_SD_BS_FCDW_LC)
@@ -497,7 +497,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     def _defl_status(actual, allowable):
         """PASS / red FAIL for deflection; '---' when values are missing."""
         try:
-            return "PASS" if float(actual) <= float(allowable) else r"\statusfail{FAIL}"
+            return r"\statuspass{PASS}" if float(actual) <= float(allowable) else r"\statusfail{FAIL}"
         except (TypeError, ValueError):
             return "---"
 
@@ -555,7 +555,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
 
     def _stress_status(actual, allow):
         try:
-            return "PASS" if float(actual) <= float(allow) else r"\statusfail{FAIL}"
+            return r"\statuspass{PASS}" if float(actual) <= float(allow) else r"\statusfail{FAIL}"
         except (TypeError, ValueError):
             return "---"
 
@@ -588,7 +588,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     def _fat_status(s):
         if s is None or str(s).strip() == "":
             return "---"
-        return r"\statusfail{" + str(s) + "}" if "FAIL" in str(s).upper() else str(s)
+        return r"\statusfail{" + str(s) + "}" if "FAIL" in str(s).upper() else (r"\statuspass{" + str(s) + "}" if "PASS" in str(s).upper() else str(s))
 
     t512_rows = []
     for _gi, (lbl, _) in enumerate(girder_entries, start=1):
@@ -716,7 +716,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
     else:
         _ts_ur_str = "---"
     _ts_ok = _dr_sc.get("transverse_shear_ok")
-    _ts_status = (r"\statusfail{FAIL}" if _ts_ok is False else "PASS") if _ts_ok is not None else "---"
+    _ts_status = (r"\statusfail{FAIL}" if _ts_ok is False else r"\statuspass{PASS}") if _ts_ok is not None else "---"
 
     _ast_req  = _dr_sc.get("Ast_required_cm2_per_m")
     # Provided transverse steel = the deck's main (bottom + top) bars, which run
@@ -923,7 +923,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
 
     def _dks(ok):
         """PASS/FAIL status; '---' when deck design not run."""
-        return ("PASS" if ok else "FAIL") if _dk_has else "---"
+        return (r"\statuspass{PASS}" if ok else r"\statusfail{FAIL}") if _dk_has else "---"
 
     def _dkoh(key, nd=2, scale=1.0, unit=""):
         """Overhang value; 'N/A' when there is no overhang."""

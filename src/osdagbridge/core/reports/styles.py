@@ -37,8 +37,10 @@ class Palette:
     # 15% tint of the brand green: marks header rows without competing
     # with the PASS/FAIL colours in the table body.
     table_header: str = "EEF3DC"
-    status_pass: str = "000000"
-    status_fail: str = "FF0000"
+    # Both at least 4.5:1 against white for small table text; FAIL is also
+    # set bold so it still stands out in black-and-white print.
+    status_pass: str = "1E7B34"
+    status_fail: str = "D0312D"
     log_warning: str = "0000FF"
     log_error: str = "FF0000"
 
@@ -217,7 +219,7 @@ def latex_definitions() -> str:
 \definecolor{{tableHeader}}{{HTML}}{{{c.table_header}}}
 \newcommand{{\tableheader}}{{\rowcolor{{tableHeader}}}}
 \newcommand{{\statuspass}}[1]{{\textcolor{{statusPass}}{{#1}}}}
-\newcommand{{\statusfail}}[1]{{\textcolor{{statusFail}}{{#1}}}}
+\newcommand{{\statusfail}}[1]{{\textcolor{{statusFail}}{{\textbf{{#1}}}}}}
 
 \setlength{{\tabcolsep}}{{{t.col_sep}}}
 \renewcommand{{\arraystretch}}{{{t.array_stretch}}}
