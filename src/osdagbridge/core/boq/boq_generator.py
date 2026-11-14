@@ -441,9 +441,13 @@ def calculate_material_quantities(inputs: dict, outputs: dict) -> dict:
         
         if cb_area_val is not None:
             try:
-                cb_area = float(cb_area_val) / 1e6
+                cb_area = float(cb_area_val)
             except Exception:
                 pass
+            # The Additional Inputs field holds m2; the plate girder defaults
+            # store the raw geometry in mm2. No barrier section is near 10 m2.
+            if cb_area > 10.0:
+                cb_area /= 1e6
         
         if cb_area > 0.0:
             cb_vol = cb_area * span
