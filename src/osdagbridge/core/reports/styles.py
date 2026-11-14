@@ -96,6 +96,27 @@ class FigureStyle:
     plot_gap_outer: str = "-0.5em"
     plot_gap_caption: str = "0.5em"
     plot_caption_size: str = r"\small"
+    chart_width: str = r"0.95\textwidth"       # summary bar charts
+
+
+@dataclass(frozen=True)
+class ChartStyle:
+    # Bar charts drawn with matplotlib for the summary sections. The pass
+    # and fail colours stay distinguishable under red-green colour
+    # blindness; failing bars are also hatched and labelled FAIL so the
+    # charts still read in greyscale print.
+    pass_bar: str = "2F6DB5"
+    fail_bar: str = "D0312D"
+    limit_line: str = "D0312D"
+    text: str = "333333"
+    grid: str = "D9D9D9"
+    # Close to FigureStyle.chart_width on the page, so the font prints at
+    # about font_size.
+    width_in: float = 6.0
+    bar_row_in: float = 0.34    # height added per bar
+    frame_in: float = 0.75      # axis labels and margins
+    font_size: float = 10.0
+    dpi: int = 200
 
 
 @dataclass(frozen=True)
@@ -143,6 +164,7 @@ COLORS = Palette()
 TABLE = TableStyle()
 SPACING = SpacingScale()
 FIGURE = FigureStyle()
+CHART = ChartStyle()
 TYPOGRAPHY = Typography()
 TITLE_PAGE = TitlePageStyle()
 HEADER_FOOTER = HeaderFooterStyle()

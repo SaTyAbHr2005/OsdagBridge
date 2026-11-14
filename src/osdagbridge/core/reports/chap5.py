@@ -3,7 +3,9 @@
 # Extracted from report_generator.py — DO NOT add business logic here.
 # =============================================================================
 from __future__ import annotations
+import logging
 import math
+import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
@@ -143,12 +145,16 @@ from osdagbridge.core.utils.common import (
     KEY_UTIL_SHEAR
 )
 
-from osdagbridge.core.reports.report_utils import _tex, _render_value, get_girder_entries
+from osdagbridge.core.reports.report_utils import _fig_embed, _tex, _render_value, get_girder_entries
+from .charts import ur_bar_chart
+from .styles import FIGURE
 from .tables import group_rows, longtable_begin
 
 if TYPE_CHECKING:
     pass
 
+
+logger = logging.getLogger(__name__)
 
 # Element groups of the Section 5.5 summary, in table order.
 SUMMARY_GROUPS = ("Plate Girders", "Deck Slab", "Cross Bracing", "End Diaphragms")
@@ -166,7 +172,38 @@ class SummaryRow:
     message: Optional[str] = None   # replaces the data cells when there is no check
 
 
-def ch5_design_checks(checks_data, bridge) -> str:
+def _ur_charts(rows: list[SummaryRow], fig_dir: str) -> str:
+    """One UR bar chart per element group, drawn from the summary table rows."""
+    figures, skipped = [], []
+    for group in SUMMARY_GROUPS:
+        # The table label carries the group ("Girder --- Moment"); the
+        # chart caption already names it.
+        items = [(row.label.split(" --- ")[-1], row.ur)
+                 for row in rows if row.group == group and row.ur is not None]
+        name = "ur_" + group.lower().replace(" ", "_") + ".png"
+        try:
+            path = ur_bar_chart(items, os.path.join(fig_dir, name))
+        except Exception:
+            # A chart is a summary of the table; losing it must not stop the report.
+            logger.exception("Utilization chart for %s could not be drawn", group)
+            path = None
+        if path:
+            figures.append(_fig_embed(path.replace("\\", "/"), "Utilization Ratios --- " + group,
+                                      width=FIGURE.chart_width))
+        else:
+            skipped.append(group)
+    if not figures:
+        return ""
+    intro = (r"\vspace{\tablegap}" "\n"
+             r"\noindent The charts below plot the utilization ratios of the table above by element group. "
+             r"The dashed line marks UR = 1.0; hatched bars labelled FAIL exceed it. "
+             r"Plate girder bars show the governing girder for each check.")
+    if skipped:
+        intro += " No chart is drawn for " + ", ".join(skipped) + ": no utilization ratio is available yet."
+    return intro + "\n\n" + "\n".join(figures) + "\n"
+
+
+def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     """Chapter 5 — Design Checks.
 
     Parameters
@@ -175,6 +212,8 @@ def ch5_design_checks(checks_data, bridge) -> str:
         Raw checks payload (currently unused; data is sourced from bridge).
     bridge : ReportDataBridge
         Provides input_dict, output_dict, and helper methods.
+    fig_dir : str, optional
+        Folder for the utilization chart images; no charts without it.
     """
     girder_entries = get_girder_entries(bridge.input_dict)
     if not girder_entries:
@@ -1096,6 +1135,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
     else:
         _overhang_row = _summary(DECK, _overhang_label, _deck_row(KEY_DD_M_ULS_OH, KEY_DD_MU_OH, "kN-m/m"))
 
+    # The table and the utilization charts are both drawn from this list.
     summary_rows = [
         _summary(PG,   r"Girder --- Moment",             _dcr_row({1})),
         _summary(PG,   r"Girder --- Shear",              _dcr_row({2})),
@@ -1116,6 +1156,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         *_ed_rows,
     ]
     t522_content = "\n".join(_row522(row) for row in summary_rows)
+    ur_charts = _ur_charts(summary_rows, fig_dir) if fig_dir else ""
 
     return r"""
 \chapter{Design Checks}
@@ -1423,5 +1464,5 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 \end{longtable}
 \noindent\textit{Note: UR = Demand / Capacity. All values $\leq 1.0$ indicate passing checks. The governing check for each component is highlighted in the individual design check sections above.}
 
-"""
+""" + ur_charts
 
