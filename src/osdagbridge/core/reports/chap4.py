@@ -12,6 +12,27 @@ from .tables import longtable_begin
 if TYPE_CHECKING:
     from .report_generator import ReportDataBridge
 
+# The analysis returns load cases in completion order, which changes from run
+# to run; the table lists them in a fixed order instead: primary cases,
+# combinations by family and number, then the envelopes.
+_PRIMARY_CASES = ("SW", "DD", "Crash barrier load", "WL Longitudinal", "WL Transverse",
+                  "WL Uplift", "EQ_X", "EQ_Y", "EQ_Z")
+_COMBINATION_FAMILIES = ("BASIC", "ACCIDENTAL", "SEISMIC", "SLS_RARE", "SLS_FREQUENT", "SLS_QP")
+
+
+def _load_case_order(name: str) -> tuple:
+    if name.lower().startswith("envelope"):
+        return (3, 0 if "uls" in name.lower() else 1, 0, name)
+    if ":" in name:                                     # "BASIC_6: 1.0DL + ..."
+        family, _, number = name.split(":", 1)[0].strip().rpartition("_")
+        if family in _COMBINATION_FAMILIES and number.isdigit():
+            return (1, _COMBINATION_FAMILIES.index(family), int(number), name)
+        return (2, 0, 0, name)
+    if name in _PRIMARY_CASES:
+        return (0, _PRIMARY_CASES.index(name), 0, name)
+    return (0, len(_PRIMARY_CASES), 0, name)
+
+
 def ch4_analysis(asum, fig_paths, bridge: "ReportDataBridge", span_m: float):
     lc_summary  = (asum or {}).get('load_cases', {})
     rxn_summary = (asum or {}).get('reactions',  {})
@@ -44,7 +65,7 @@ def ch4_analysis(asum, fig_paths, bridge: "ReportDataBridge", span_m: float):
             + _fmt(rxn_d.get('right_kN'))        + r" \\[\rowpad]"
         )
 
-    all_lcs = list(lc_summary.keys()) + [k for k in rxn_summary if k not in lc_summary]
+    all_lcs = sorted(set(lc_summary) | set(rxn_summary), key=_load_case_order)
 
     merged_body = ("\n\\hline\n").join(
         _merged_row(lc, lc_summary.get(lc), rxn_summary.get(lc))
