@@ -1,6 +1,6 @@
 # OsdagBridge design report: technical changes
 
-Branch `report-enhancements`, 68 commits on top of `upstream/dev`.
+Branch `report-enhancements`: 68 commits of code and tests on top of `upstream/dev`, plus this document.
 `Report_Before.pdf` and `Report_After.pdf` in this folder were built from the same inputs (span 30 m, carriageway 7.5 m, Mumbai (Colaba), all other inputs at their defaults) with the same script, so every difference between them comes from the code changes below.
 
 | | Before | After |
