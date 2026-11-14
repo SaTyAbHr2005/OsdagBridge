@@ -158,7 +158,18 @@ def _preview_watermark() -> str:
             r"\SetWatermarkScale{0.85}" "\n")
 
 
-def preamble(project_name, job_number, report_date, report_version='Rev 0', preview=False):
+def _pdf_properties(project_name: str, author: str) -> str:
+    """Document properties shown by PDF viewers and file search, and the
+    bookmark panel opened at chapter level."""
+    title = "Design Report" + (" --- " + project_name if project_name else "")
+    return (r"\usepackage{bookmark}" "\n"
+            r"\hypersetup{pdftitle={" + title + "}, pdfauthor={" + author + "},"
+            r" pdfsubject={Steel plate girder bridge design}, pdfcreator={OsdagBridge},"
+            r" pdfkeywords={IRC 6, IRC 22, IRC 24, IS 800, plate girder},"
+            r" bookmarksnumbered=true, bookmarksopen=true, bookmarksopenlevel=0}" "\n")
+
+
+def preamble(project_name, job_number, report_date, report_version='Rev 0', preview=False, author=''):
     pn = _tex(project_name)
     jn = _tex(job_number)
     rd = _tex(report_date)
@@ -177,7 +188,7 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0', prev
 \usepackage{float}
 \usepackage{fancyhdr}
 \usepackage[hidelinks]{hyperref}
-\usepackage{xcolor}
+""" + _pdf_properties(pn, _tex(author)) + r"""\usepackage{xcolor}
 """ + (_preview_watermark() if preview else "") + r"""
 \usepackage{setspace}
 \usepackage{enumitem}
@@ -311,6 +322,9 @@ def toc_section():
     return r"""
 \newpage
 \tableofcontents
+\newpage
+\listoffigures
+\listoftables
 """
 
 
@@ -868,7 +882,7 @@ def generate_report(payload, request):
 
             doc_parts = []
             doc_parts.append(preamble(payload.metadata.project_name, payload.metadata.job_number, payload.metadata.report_date, payload.metadata.subtitle or 'Rev 0',
-                                      preview=request.options.preview))
+                                      preview=request.options.preview, author=payload.metadata.designer))
             doc_parts.append(title_page(payload.metadata, osdag_logo_latex, org_logo_latex))
 
             if payload.options.include_toc:
