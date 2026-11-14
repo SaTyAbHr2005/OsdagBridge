@@ -1,5 +1,67 @@
-from .styles import TABLE
+import logging
+import os
+
+from .charts import quantity_bar_chart
+from .report_utils import _fig_embed
+from .styles import FIGURE, TABLE
 from .tables import longtable_begin
+
+logger = logging.getLogger(__name__)
+
+
+def _qty(input_dict, *keys):
+    """Sum of BOM values (strings such as "12.34" or "N.A."); None when none is a number."""
+    total, found = 0.0, False
+    for key in keys:
+        try:
+            total += float(input_dict.get(key))
+            found = True
+        except (TypeError, ValueError):
+            pass
+    return total if found else None
+
+
+def _quantity_charts(input_dict, fig_dir):
+    """Steel tonnage by component, and concrete volume next to reinforcement weight."""
+    ed_rows = input_dict.get("end_diaphragm_rows") or []
+    steel = [
+        _qty(input_dict, "steel_girders_wt_total"),
+        _qty(input_dict, "bracing_top_wt_total", "bracing_bot_wt_total", "bracing_diag_wt_total"),
+        sum(row["weight_t"] for row in ed_rows) if ed_rows else None,
+    ]
+    charts = [
+        (["Plate girders", "Cross bracing", "End diaphragms"],
+         [("Structural steel (MT)", steel)],
+         "qty_steel.png", "Structural Steel Tonnage by Component"),
+        (["Deck slab", "Crash barriers"],
+         [("Concrete volume (m$^3$)", [_qty(input_dict, "concrete_deck_vol_total"),
+                                       _qty(input_dict, "crash_barrier_vol_total")]),
+          ("Reinforcement weight (MT)", [_qty(input_dict, "rebar_deck_wt_total"), None])],
+         "qty_concrete.png", "Concrete Volume and Reinforcement Weight"),
+    ]
+    figures = []
+    for labels, panels, name, caption in charts:
+        try:
+            path = quantity_bar_chart(labels, panels, os.path.join(fig_dir, name))
+        except Exception:
+            # The charts restate the table; losing one must not stop the report.
+            logger.exception("Quantity chart %s could not be drawn", name)
+            path = None
+        if path:
+            figures.append(_fig_embed(path.replace("\\", "/"), caption, width=FIGURE.chart_width))
+    if not figures:
+        return ""
+    parts = [name for name, value in zip(("girders", "cross bracing", "end diaphragms"), steel)
+             if value is not None]
+    total = sum(value for value in steel if value is not None)
+    steel_text = (f"Structural steel for the {', '.join(parts[:-1])}{' and ' if len(parts) > 1 else ''}"
+                  f"{parts[-1]} totals {total:.2f} MT. ") if parts else ""
+    return ("\n" r"\vspace{\tablegap}" "\n"
+            r"\noindent The charts below summarise the bill of materials. " + steel_text +
+            r"Concrete and reinforcement are drawn on separate scales; "
+            r"n/a marks a quantity the take-off does not compute (crash barrier reinforcement)."
+            "\n\n" + "\n".join(figures) + "\n")
+
 
 def _end_diaphragm_rows(rows: list) -> str:
     """Item 7 of the bill of materials: one sub-item per end diaphragm member kind."""
@@ -14,7 +76,9 @@ def _end_diaphragm_rows(rows: list) -> str:
     return out
 
 
-def ch7_quantities(input_dict):
+def ch7_quantities(input_dict, fig_dir=None):
+    """Chapter 7: bill of materials, then the quantity charts when ``fig_dir`` is given."""
+    charts = _quantity_charts(input_dict, fig_dir) if fig_dir else ""
     return r"""
 \chapter{Material Take-off \& Quantity Summary}
 \label{ch:material-takeoff}
@@ -45,6 +109,6 @@ def ch7_quantities(input_dict):
 \hline
 """ + _end_diaphragm_rows(input_dict.get("end_diaphragm_rows") or []) + r"""\end{longtable}
 \endgroup
-"""
+""" + charts
 
 

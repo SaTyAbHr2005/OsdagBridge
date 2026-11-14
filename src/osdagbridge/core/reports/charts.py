@@ -50,7 +50,7 @@ def ur_bar_chart(items: Sequence[tuple[str, float]], path: str) -> Optional[str]
             bar.set_linewidth(0)
 
     # Room on the right for the value labels.
-    x_max = max(UR_LIMIT * 1.25, max(urs) * 1.2)
+    x_max = max(UR_LIMIT * 1.25, max(urs) * 1.3)
     text = _colour(CHART.text)
     for row, ur, fail in zip(rows, urs, failing):
         # White backing keeps a label readable where it crosses the limit line.
@@ -65,9 +65,55 @@ def ur_bar_chart(items: Sequence[tuple[str, float]], path: str) -> Optional[str]
                 fontsize=CHART.font_size, color=_colour(CHART.limit_line))
 
     ax.set_yticks(list(rows), labels)
-    ax.invert_yaxis()
     ax.set_xlim(0, x_max)
-    ax.set_xlabel("Utilization ratio", fontsize=CHART.font_size, color=text)
+    _style_axis(ax, "Utilization ratio")
+
+    fig.savefig(path, facecolor="white")
+    return path
+
+
+def quantity_bar_chart(labels: Sequence[str],
+                       panels: Sequence[tuple[str, Sequence[Optional[float]]]],
+                       path: str) -> Optional[str]:
+    """Save horizontal bar panels side by side that share the row labels.
+
+    Each panel is (axis label, values aligned with ``labels``) and has its
+    own scale, so quantities in different units are never drawn against one
+    axis. A value of None draws no bar and is marked "n/a". Returns ``path``,
+    or None when no panel has a value.
+    """
+    if not labels or not any(v is not None for _, values in panels for v in values):
+        return None
+    fig = Figure(
+        figsize=(CHART.width_in, CHART.frame_in + CHART.bar_row_in * len(labels)),
+        dpi=CHART.dpi,
+        layout="constrained",
+    )
+    axes = fig.subplots(1, len(panels), sharey=True, squeeze=False)[0]
+    rows = range(len(labels))
+    text = _colour(CHART.text)
+    for ax, (axis_label, values) in zip(axes, panels):
+        present = [v for v in values if v is not None]
+        x_max = (max(present) * 1.3) if present and max(present) > 0 else 1.0
+        ax.barh([r for r, v in zip(rows, values) if v is not None], present,
+                height=0.6, color=_colour(CHART.quantity_bar))
+        for row, value in zip(rows, values):
+            ax.text((value or 0.0) + 0.012 * x_max, row, "n/a" if value is None else f"{value:.2f}",
+                    va="center", fontsize=CHART.font_size, color=text)
+        ax.set_xlim(0, x_max)
+        _style_axis(ax, axis_label)
+    axes[0].set_yticks(list(rows), labels)
+
+    fig.savefig(path, facecolor="white")
+    return path
+
+
+def _style_axis(ax, xlabel: str) -> None:
+    """Recessive grid and spines, rows read top to bottom."""
+    text = _colour(CHART.text)
+    if not ax.yaxis_inverted():
+        ax.invert_yaxis()
+    ax.set_xlabel(xlabel, fontsize=CHART.font_size, color=text)
     ax.tick_params(labelsize=CHART.font_size, colors=text, length=0)
     ax.xaxis.grid(True, color=_colour(CHART.grid), linewidth=0.6)
     ax.set_axisbelow(True)
@@ -75,6 +121,3 @@ def ur_bar_chart(items: Sequence[tuple[str, float]], path: str) -> Optional[str]
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(_colour(CHART.grid))
-
-    fig.savefig(path, facecolor="white")
-    return path

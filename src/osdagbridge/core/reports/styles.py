@@ -108,6 +108,7 @@ class ChartStyle:
     pass_bar: str = "2F6DB5"
     fail_bar: str = "D0312D"
     limit_line: str = "D0312D"
+    quantity_bar: str = "2F6DB5"   # material quantities (no pass/fail meaning)
     text: str = "333333"
     grid: str = "D9D9D9"
     # Close to FigureStyle.chart_width on the page, so the font prints at
