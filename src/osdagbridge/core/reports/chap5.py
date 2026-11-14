@@ -512,7 +512,9 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     def _ur_cell(v, nd=2):
         """Utilization ratio to nd places, in the fail style above 1.0."""
         s = _dfmt(v, nd)
-        return r"\statusfail{" + s + "}" if s and float(v) > 1.0 else s
+        if not s or not math.isfinite(float(v)):
+            return ""
+        return r"\statusfail{" + s + "}" if float(v) > 1.0 else s
 
     # Mirror generate_results_values_builder.resolve_deflection_live/total_load
     # exactly so the report shows the same numbers as the Generate Results dialog:

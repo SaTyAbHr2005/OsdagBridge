@@ -3,6 +3,8 @@
 # Extracted from report_generator.py — DO NOT add business logic here.
 # =============================================================================
 
+import math
+
 from osdagbridge.core.utils.common import (
     KEY_CB_LOAD,
     KEY_MATERIAL_DECK_DENSITY,
@@ -58,6 +60,8 @@ def _wearing_course_load(input_dict) -> str:
         thickness_mm = float(input_dict.get(KEY_WC_THICKNESS))
         density = float(input_dict.get(KEY_WC_DENSITY))
     except (TypeError, ValueError):
+        return material
+    if not (math.isfinite(thickness_mm) and math.isfinite(density)):
         return material
     return (f"{material}, {thickness_mm:g} mm thick at {density:g} kN/m\\textsuperscript{{3}} "
             f"= {thickness_mm / 1000.0 * density:.2f} kN/m\\textsuperscript{{2}}")
