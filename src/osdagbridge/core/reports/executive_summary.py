@@ -15,6 +15,24 @@ from osdagbridge.core.utils.common import (
 )
 
 
+# Stiffener check names from the girder designer are written for the log
+# ("Int.Stiff: Leg ≤ H_limit"); the summary spells them out.
+_STIFFENER_PREFIXES = {"Int.Stiff:": "Intermediate stiffener", "Brg.Stiff:": "Bearing stiffener"}
+_STIFFENER_CHECKS = {
+    "Leg ≤ H_limit": "outstand (IRC 22 Cl. 509.7.2.4)",
+    "Iys ≥ Iys_min": "stiffness",
+    "Buckling Fqd≥Fq": "buckling",
+}
+
+
+def _readable_check(name: str) -> str:
+    for prefix, member in _STIFFENER_PREFIXES.items():
+        if name.startswith(prefix):
+            check = name[len(prefix):].strip()
+            return f"{member} {_STIFFENER_CHECKS.get(check, check.lower())}"
+    return name
+
+
 def _max_float(values):
     """Return the largest value coercible to float, or None if there are none."""
     out = None
@@ -93,7 +111,7 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
                     dcr = float(_val)
             except (TypeError, ValueError):
                 dcr = None
-            name = str(chk.get("name", "")).strip()
+            name = _readable_check(str(chk.get("name", "")).strip())
             is_fail = ("FAIL" in str(chk.get("status", "")).upper()) or (dcr is not None and dcr > 1.0)
             if is_fail and name and name not in failing:
                 failing.append(name)
