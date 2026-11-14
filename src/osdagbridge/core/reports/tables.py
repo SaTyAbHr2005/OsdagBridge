@@ -79,7 +79,7 @@ def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
 
     if caption:
         # The optional argument keeps the List of Tables entry in plain type.
-        first_caption = r"\caption[" + caption + r"]{\textbf{" + caption + "}}"
+        first_caption = r"\caption[{" + caption + r"}]{\textbf{" + caption + "}}"
         if label:
             first_caption += r"\label{" + label + "}"
         first_caption += "\\\\\n"

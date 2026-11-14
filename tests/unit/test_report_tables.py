@@ -16,7 +16,7 @@ def test_count_columns_ignores_decorations():
 def test_header_and_caption_repeat_on_every_page():
     tex = longtable_begin(r"|L{5cm}|L{5cm}|", HEADER, caption="Loads", label="tab:loads")
     first, rest = tex.split(r"\endfirsthead")
-    assert r"\caption[Loads]{\textbf{Loads}}\label{tab:loads}" in first
+    assert r"\caption[{Loads}]{\textbf{Loads}}\label{tab:loads}" in first
     # The repeated caption is left out of the List of Tables and marked as continued.
     assert r"\caption[]{\textbf{Loads} " + TABLE.continued_caption + "}" in rest
     assert first.count(HEADER) == 1 and rest.count(HEADER) == 1

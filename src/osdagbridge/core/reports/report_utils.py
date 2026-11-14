@@ -110,7 +110,7 @@ def _fig_embed(path, caption, width=FIGURE.plot_width, height=None):
                 r'\vspace{' + FIGURE.plot_gap_caption + '}\n'
                 # Numbered so the plot is listed in the List of Figures; the
                 # list takes the title up to the first colon.
-                r'\caption[' + caption.split(':')[0] + ']{' + FIGURE.plot_caption_size + ' ' + caption + '}\n'
+                r'\caption[{' + caption.split(':')[0] + '}]{' + FIGURE.plot_caption_size + ' ' + caption + '}\n'
                 r'\vspace{' + FIGURE.plot_gap_outer + '}\n'
                 r'\end{figure}')
     # fbox placeholder — matches template exactly
