@@ -148,6 +148,8 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
 
     gov = _tex(gov_name) if gov_name not in (None, '', 'None') else ''
     ur = _tex(overall_utilization_ratio) if overall_utilization_ratio else ''
+    if component_urs and max_ur > 1.0:
+        ur = r"\statusfail{" + ur + "}"
 
     # --- Dynamic Table 1: fetch backend-populated labels via exact suffix pattern ---
     # defaults.py populates: KEY_MP_GD_SELECT_GIRDER + '.G{i}' = 'G{i}'

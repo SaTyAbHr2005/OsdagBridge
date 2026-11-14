@@ -505,9 +505,14 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
         """Format a numeric value to nd decimal places; empty string when None."""
         try:
             return f"{float(v):.{nd}f}"
-            
+
         except (TypeError, ValueError):
             return ""
+
+    def _ur_cell(v, nd=2):
+        """Utilization ratio to nd places, in the fail style above 1.0."""
+        s = _dfmt(v, nd)
+        return r"\statusfail{" + s + "}" if s and float(v) > 1.0 else s
 
     # Mirror generate_results_values_builder.resolve_deflection_live/total_load
     # exactly so the report shows the same numbers as the Generate Results dialog:
@@ -597,7 +602,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
             r"\makecell{" + lbl + r"""} & """
             + _mpa(_g.get("demand")) + r""" & """
             + _mpa(_g.get("capacity")) + r""" & """
-            + _dfmt(_g.get("ur"), nd=2) + r""" & """
+            + _ur_cell(_g.get("ur"), 2) + r""" & """
             + _fat_status(_g.get("status")) + r""" \\[\rowpad]
 \hline"""
         )
@@ -643,7 +648,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
             lbl + r""" & """ + _tex(str(ctrl_lc)) + r""" & """ + _tex(str(ctrl.get("name", "")))
             + r""" & """ + _with_unit(ctrl.get("demand"),   ctrl.get("demand_unit"))
             + r""" & """ + _with_unit(ctrl.get("capacity"), ctrl.get("capacity_unit"))
-            + r""" & """ + _dfmt(ctrl.get("dcr"), nd=3)
+            + r""" & """ + _ur_cell(ctrl.get("dcr"), 3)
             + r""" & """ + _fat_status(ctrl.get("status")) + r""" \\[\rowpad]
 \hline"""
         )
@@ -962,12 +967,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         return (s + " " + u) if u else s
 
     def _ur_522(v):
-        try:
-            f = float(v)
-        except (TypeError, ValueError):
-            return ""
-        s = f"{f:.2f}"
-        return (r"\statusfail{" + s + "}") if f > 1.0 else s
+        return _ur_cell(v, 2)
 
     def _lc_short(lc):
         # Show the full combination expression as-is, e.g.
