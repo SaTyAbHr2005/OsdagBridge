@@ -1,6 +1,18 @@
 from .styles import TABLE
 from .tables import longtable_begin
 
+def _end_diaphragm_rows(rows: list) -> str:
+    """Item 7 of the bill of materials: one sub-item per end diaphragm member kind."""
+    if not rows:
+        return r"7 & End Diaphragms & N.A. & N.A. & N.A. & N.A. & N.A. \\" + "\n\\hline\n"
+    out = ""
+    for letter, row in zip("abcdefgh", rows):
+        number = f"7({letter})" if len(rows) > 1 else "7"
+        cells = (number, row["label"], row["vol_formula"], row["qty"], row["vol_total"],
+                 row["wt_single"], row["wt_total"])
+        out += " & ".join(cells) + r" \\" + "\n\\hline\n"
+    return out
+
 
 def ch7_quantities(input_dict):
     return r"""
@@ -31,7 +43,7 @@ def ch7_quantities(input_dict):
 \hline
 6 & Crash Barrier & """ + str(input_dict.get("crash_barrier_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_qty", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_wt_total", "N.A.")) + r""" \\
 \hline
-\end{longtable}
+""" + _end_diaphragm_rows(input_dict.get("end_diaphragm_rows") or []) + r"""\end{longtable}
 """
 
 
