@@ -33,6 +33,49 @@ def _readable_check(name: str) -> str:
     return name
 
 
+_DECK_POSITIONS = {"bot": "bottom", "top": "top", "oh": "overhang", "composite": "composite"}
+_DECK_CHECKS = {
+    "uls": "ULS flexure", "sls_c": "SLS concrete stress", "sls_s": "SLS steel stress",
+    "crack": "crack width", "shear": "shear", "punch": "punching shear",
+    "conc_stress": "concrete stress", "rebar_stress": "rebar stress", "trans_shear": "transverse shear",
+}
+
+
+def _deck_check_name(key: str) -> str:
+    """'ur_bot_uls' -> 'Deck slab (bottom): ULS flexure'."""
+    position, _, check = key[len("ur_"):].partition("_")
+    return (f"Deck slab ({_DECK_POSITIONS.get(position, position)}): "
+            f"{_DECK_CHECKS.get(check, check.replace('_', ' '))}")
+
+
+def _critical_checks_box(failures, governing) -> str:
+    """Boxed verdict for the first summary page, with links to each failing check.
+
+    ``failures`` holds (check, members, max UR or None, section label) rows;
+    ``governing`` is the "<check>, UR = x.xx" text of the highest UR.
+    """
+    verdict = r"\statusfail{FAIL}" if failures else r"\statuspass{PASS}"
+    lines = [r"\textbf{Critical Checks} \hfill Design verdict: " + verdict + r"\\[3pt]"]
+    if governing:
+        lines.append(r"Governing check: " + governing + r"\\[3pt]")
+    if failures:
+        rows = "\n".join(
+            _tex(check) + " & " + _tex(members) + " & "
+            + (r"\statusfail{" + f"{ur:.2f}" + "}" if ur is not None else "---")
+            + r" & Section~\ref{" + section + r"} \\ \hline"
+            for check, members, ur, section in failures)
+        lines.append(r"\begin{tabular}{|L{6.2cm}|C{3.2cm}|C{1.6cm}|C{2.6cm}|}" "\n"
+                     r"\hline \tableheader \textbf{Failing Check} & \textbf{Members} & \textbf{Max UR}"
+                     r" & \textbf{Details} \\ \hline" "\n" + rows + "\n" r"\end{tabular}\\[3pt]")
+    else:
+        lines.append(r"All design checks pass.\\[3pt]")
+    lines.append(r"Every check is listed in Section~\ref{sec:overall-summary}.")
+    return ("\n" r"\vspace{\tablegap}" "\n" r"\noindent\fcolorbox{"
+            + ("statusFail" if failures else "statusPass")
+            + r"}{white}{\begin{minipage}{\dimexpr\textwidth-2\fboxsep-2\fboxrule\relax}" "\n"
+            + "\n".join(lines) + "\n" r"\end{minipage}}" "\n")
+
+
 def _max_float(values):
     """Return the largest value coercible to float, or None if there are none."""
     out = None
@@ -97,6 +140,7 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
     # otherwise Fail with the names of the failing checks. Each check carries a
     # pre-computed {name, dcr, status}.
     failing = []                        # failing check names (order-preserving, deduped)
+    girder_failures = {}                # check name -> (failing girders, [max UR])
     gov_name, gov_dcr = "", None
     girder_max_ur = None
     for g, gd in per_girder.items():
@@ -115,6 +159,11 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
             is_fail = ("FAIL" in str(chk.get("status", "")).upper()) or (dcr is not None and dcr > 1.0)
             if is_fail and name and name not in failing:
                 failing.append(name)
+            if is_fail and name:
+                girders, worst = girder_failures.setdefault(name, ([], [None]))
+                girders.append(str(g))
+                if dcr is not None and (worst[0] is None or dcr > worst[0]):
+                    worst[0] = dcr
             if dcr is not None:
                 if gov_dcr is None or dcr > gov_dcr:
                     gov_dcr, gov_name = dcr, name
@@ -146,10 +195,33 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
     else:
         overall_utilization_ratio = ""
 
+    # Rows of the Critical Checks box: failing girder checks, then any other
+    # component whose utilization exceeds 1.0.
+    failures = [(name, ", ".join(girders), worst[0], "sec:plate-girder")
+                for name, (girders, worst) in girder_failures.items()]
+    for key, value in deck_results.items():
+        ratio = _max_float([value]) if str(key).startswith("ur_") else None
+        if ratio is not None and ratio > 1.0:
+            failures.append((_deck_check_name(str(key)), "Deck slab", ratio, "sec:deck-design"))
+    for results, label, section in ((cb_results, "Cross bracing", "sec:cross-bracing"),
+                                    (ed_results, "End diaphragm", "sec:end-diaphragm")):
+        ratio = _max_member_efficiency(results)
+        if ratio is not None and ratio > 1.0:
+            failures.append((label + " member capacity", label, ratio, section))
+
     gov = _tex(gov_name) if gov_name not in (None, '', 'None') else ''
     ur = _tex(overall_utilization_ratio) if overall_utilization_ratio else ''
     if component_urs and max_ur > 1.0:
         ur = r"\statusfail{" + ur + "}"
+
+    critical_box = ""
+    if per_girder:
+        governing = ""
+        if component_urs:
+            what = f"{gov} (Girder)" if max_label == "Girder" and gov else _tex(max_label)
+            value = f"{max_ur:.2f}"
+            governing = what + ", UR = " + (r"\statusfail{" + value + "}" if max_ur > 1.0 else value)
+        critical_box = _critical_checks_box(failures, governing)
 
     # --- Dynamic Table 1: fetch backend-populated labels via exact suffix pattern ---
     # defaults.py populates: KEY_MP_GD_SELECT_GIRDER + '.G{i}' = 'G{i}'
@@ -234,7 +306,7 @@ This section provides a concise summary of the bridge design, key inputs, govern
 \textbf{Overall Utilization Ratio (max)} & """ + ur + r""" \\
 \hline
 \end{tabular}
-
+""" + critical_box + r"""
 
 """ + plan_fig + r"""
 
