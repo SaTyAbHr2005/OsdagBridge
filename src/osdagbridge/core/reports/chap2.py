@@ -119,7 +119,7 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \hline
 \textnormal{Footpath} & """ + (_render_value(input_dict, KEY_FOOTPATH)) + r""" \\
 \hline
-\textnormal{Skew Angle (degrees)} & """ + (_render_value(input_dict, KEY_SKEW_ANGLE, '°')) + r""" (IRC 24 Cl. 504.8 limit: $\pm$15°) \\
+\textnormal{Skew Angle (degrees)} & """ + (_render_value(input_dict, KEY_SKEW_ANGLE, '°') or r"0°\sdstar{}") + r""" (IRC 24 Cl. 504.8 limit: $\pm$15°) \\
 \hline
 \end{longtable}
 
