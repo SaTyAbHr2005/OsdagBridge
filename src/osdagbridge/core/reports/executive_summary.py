@@ -143,8 +143,14 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
     girder_failures = {}                # check name -> (failing girders, [max UR])
     gov_name, gov_dcr = "", None
     girder_max_ur = None
+    # The design results also hold grillage members that are not girders of
+    # the bridge (G5, G6 for four girders); Chapter 5 reports G1..Gn only.
+    try:
+        girders = {f"G{i}" for i in range(1, int(input_dict.get(KEY_TS_NO_OF_GIRDERS) or 0) + 1)}
+    except (TypeError, ValueError):
+        girders = set()
     for g, gd in per_girder.items():
-        if str(g).startswith("EB"):     # skip edge-beam pseudo girders
+        if str(g).startswith("EB") or (girders and str(g) not in girders):
             continue
         for chk in (gd.get("checks") or []):
             try:
