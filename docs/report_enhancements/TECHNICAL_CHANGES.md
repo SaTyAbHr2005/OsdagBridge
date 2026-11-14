@@ -1,0 +1,155 @@
+# OsdagBridge design report: technical changes
+
+Branch `report-enhancements`, 68 commits on top of `upstream/dev`.
+`Report_Before.pdf` and `Report_After.pdf` in this folder were built from the same inputs (span 30 m, carriageway 7.5 m, Mumbai (Colaba), all other inputs at their defaults) with the same script, so every difference between them comes from the code changes below.
+
+| | Before | After |
+|---|---|---|
+| Pages | 56 | 64 |
+| Long tables that repeat their header on a new page | 2 of 49 | 51 of 51 |
+| Rows running into the footer | page 30 (G4 stiffener row) | none |
+| Charts | none | 5 (3 utilization, 2 material) |
+| Automated tests for the report | none | 35 |
+
+The extra pages come from the new List of Figures and List of Tables, the charts, the end diaphragm rows, the design log chapter and Table 5.1, which now gives each girder its own page instead of breaking a girder's rows across two.
+
+## Before and after
+
+| Before | After |
+|---|---|
+| ![Page 30 before: the G4 label of the stiffener table runs into the footer](images/footer_before.png) | ![The same table after: each girder block starts on a new page with the repeated header](images/footer_after.png) |
+| Page 30: the "G4" label hangs into the footer | The stiffener table breaks between girders and repeats its header |
+| ![Live loads before: one table with all vehicles in a single cell](images/live_loads_before.png) | ![Live loads after: one row per selected vehicle with impact factor and braking](images/live_loads_after.png) |
+| One live load table, braking "N/A", footpath load blank | Vehicle table (one row per ticked vehicle) and a separate footpath table |
+
+| After only | |
+|---|---|
+| ![Critical Checks box on the executive summary](images/critical_checks_after.png) | ![Utilization ratio chart in Section 5.5](images/ur_charts_after.png) |
+| Critical Checks box on the first summary page | Utilization ratio chart, Section 5.5 |
+| ![Material quantity charts in Chapter 7](images/material_charts_after.png) | ![A table continued on a new page with its caption and header repeated](images/repeated_header_after.png) |
+| Material quantity charts, Chapter 7 | A continued table with its caption and header repeated |
+
+## How to build and check a report
+
+```bash
+python tools/build_sample_report.py sample.pdf --keep-build build/
+```
+
+The script opens the application, enters the main inputs, runs Design and then Generate Report, so the PDF goes through the same code as a user's report. `--keep-build` keeps the `.tex`, `.log` and chart images; `--preview` builds a watermarked preview; `--set-input KEY=JSON` changes an input that only the report reads (used to check that the live load tables follow the Loading tab).
+
+```bash
+python -m pytest tests
+```
+
+`tests/integration/test_report_latex.py` compiles a short document with the bundled pdflatex (title page, executive summary, a table that breaks across pages, a chart and the design log), using a project name full of characters LaTeX treats specially. It is skipped when no pdflatex is found.
+
+## Item 6: central style module
+
+`src/osdagbridge/core/reports/styles.py` now holds every layout and theme value that the chapters used to repeat as literals:
+
+| Class (instance) | What it holds |
+|---|---|
+| `PageStyle` (`PAGE`) | paper, font size, margins, header height, footer distance |
+| `Palette` (`COLORS`) | brand green, table header tint, PASS/FAIL and log colours |
+| `TableStyle` (`TABLE`) | column gaps, row padding, rule width, "continued" labels |
+| `SpacingScale` (`SPACING`) | the three vertical gaps used between blocks |
+| `FigureStyle` (`FIGURE`) | figure widths and caption spacing |
+| `ChartStyle` (`CHART`) | chart colours, size and font |
+| `Typography`, `TitlePageStyle`, `HeaderFooterStyle` | headings, title page, running header and footer |
+
+`latex_definitions()` turns these values into named LaTeX lengths, colours and macros (`\rowpad`, `\tablegap`, `\statuspass{}`, `\statusfail{}`, `\groupcline`), and the chapters use only those names. Changing a margin, a colour or a row gap is now a one-line edit. While moving the values, four leaks were fixed: a `\tabcolsep` change in Section 2.2 that carried into every later table, a caption gap from Chapter 2, chapter headings losing their format when the table of contents is turned off, and a second chapter-heading definition in the executive summary.
+
+## Item 1: table headers repeat across page breaks
+
+All 51 long tables now open with `longtable_begin()` in `tables.py`. It writes the caption and header once for the first page (`\endfirsthead`), repeats both under a "(continued)" caption on every following page (`\endhead`), ends each broken page with "Continued on next page" (`\endfoot`), and narrows the column widths when a table would run past the text block. Before this, 45 of the tables were wider than the page once column gaps were counted.
+
+Grouped tables (one block of rows per girder or per bracing panel) use `group_rows()`. Rows inside a group end in `\\*`, which forbids a page break, and the rules between them use `\groupcline`, a copy of `\cline` that cannot be broken after. When a group does not fit at the bottom of a page, the whole group moves to the next page with its label.
+
+## Item 2: footer overlap and vertical spacing
+
+Cause of the page 30 overlap: the footer rule sat about 6 pt below the last text line, and the stiffener table broke inside the G4 group, so the centred "G4" label hung below the cut and into the footer.
+
+- `headheight` and `footskip` are now set in the page geometry. This also removed 54 fancyhdr warnings.
+- The footer rule moved clear of the text block, and the "software default value" note moved below it.
+- Grouped tables no longer break inside a group (see Item 1).
+- Cell padding was rebalanced so single-line rows sit in the middle of the row.
+
+## Item 3: vehicle and footpath live loads
+
+`live_loads.py` builds the rows and `chap3.py` only formats them. The single mixed table became two.
+
+The Vehicular Live Load table has one row per vehicle ticked in Additional Inputs > Loading, custom vehicles included, with columns for total load (kN), impact factor, braking load (considered?, value in kN, eccentricity in m) and centrifugal force (kN). Impact factors follow IRC 6 Cl. 208.2 for Class A and wheeled custom vehicles and Cl. 208.3 for Class AA, 70R and tracked vehicles. Braking is 20 % of the first train (Cl. 211.2), applied at the eccentricity entered in the Loading tab.
+
+The Footpath Live Load table gives whether a footpath exists, its width, the pressure basis (IRC 6 or a user value) and the load in kN/m².
+
+`IRC6_2017.cl_208_3_impact_factor` gained an optional `tracked` argument so the table can give each vehicle its own factor; its default behaviour is unchanged. A note under the table states the factor the grillage analysis applies today, because the analysis does not use the per-vehicle selection (see "Backend issues").
+
+## Item 4: utilization ratio charts in Section 5.5
+
+The rows of the Overall Design Check Summary are now `SummaryRow` records with a numeric UR, and the table and the charts are both drawn from that list, so they cannot disagree. `charts.py` draws one horizontal bar chart per element group (plate girders, deck slab, cross bracing, end diaphragms) with a red dashed line at UR = 1.0. Failing bars are red, hatched and labelled FAIL, so they still read in greyscale print and for colour-blind readers. A group with no UR (rolled or welded end diaphragms have no design check yet) gets one sentence instead of an empty chart.
+
+The bundled TeX has no pgfplots, so the charts are matplotlib PNGs. They are drawn with matplotlib's object interface (`Figure`), which can run on the report thread while the Qt window is open; pyplot keeps global state and is not safe there.
+
+## Item 5: material quantity charts in Chapter 7
+
+The bill of materials had no end diaphragm rows. `boq_generator.end_diaphragm_quantities()` adds them as item 7: one diaphragm at each support of every girder pair, read per support end. Cross bracing diaphragms give chords and diagonals (diagonal length from the girder spacing and the 0.85 × girder depth bracing height the end diaphragm design uses; a double angle counts as two angles), and rolled or welded beam diaphragms give one beam each. Members of different sizes get their own row, so quantity × unit weight always equals the total.
+
+Chapter 7 then shows two charts under the table: structural steel tonnage for girders, cross bracing and end diaphragms, and concrete volume (m³) next to reinforcement weight (MT). The second chart uses two panels with separate scales rather than one chart with two y-axes, because two scales on one axis invite comparing bar heights that have different units.
+
+## Additional changes
+
+| | Change | Why |
+|---|---|---|
+| A1 | Report defects: stable Chapter 4 load case order, no "-0.000", computed wind Vz and Pz shown, wearing course load in kN/m², units in the summary, 0° skew shown when none is entered, stiffener sizes labelled "required" in Optimized mode, readable stiffener check names, no stray "\|" in the header, crash barrier volume | Each was wrong or blank in the old report |
+| A2 | Green PASS and bold red FAIL in every check table, UR above 1.0 highlighted everywhere | 65 of 80 PASS cells were plain text, and the old red was below the 4.5:1 text contrast minimum |
+| A3 | Critical Checks box on the first summary page: verdict, governing check, each failing check with its girders, highest UR and a link to its section | A reviewer sees the outcome without paging through the report |
+| A4 | Document control block (Rev, date, description, prepared, checked, approved) on the title page | Standard on issued design reports |
+| A5 | "PREVIEW --- NOT FOR CONSTRUCTION" watermark on reports from the Preview button | A printed preview cannot pass as an issued report |
+| A6 | List of Figures, List of Tables, numbered plot captions, PDF title/author/subject, bookmarks opened at chapter level | Navigation in a long document |
+| A7 | "Summary charts" item in the report options | Users can leave the charts out |
+| A8 | 35 tests: style module, table helper, charts, live load selection, end diaphragm quantities, executive summary, design log, LaTeX compilation | The report had no tests |
+| A9 | `tools/build_sample_report.py` | Reproducible sample reports for before/after comparisons |
+
+Defects in existing code found and fixed on the way:
+
+- The report options let users untick Chapters 7 to 10, but the generator always included them; the Design Log chapter was built and then thrown away. Both now follow the ticks, and the design log is printed.
+- The crash barrier area was divided by 10⁶ a second time, so its volume was 0.00. The Additional Inputs field holds m²; the plate girder defaults store mm², and the bill of materials now accepts both.
+- The executive summary counted the two edge-beam grillage lines (G5 and G6 for a four-girder bridge) as girders.
+- Chapter 7 opened a `\begingroup` that was never closed, so its tight column spacing carried into Chapter 8.
+- The End Diaphragm property table was filled with cross bracing data, and two member property tables declared more columns than they filled.
+- `≤` in check names stopped pdflatex.
+
+## Backend issues found (not report code)
+
+These are outside the report generator and are left for separate issues:
+
+1. `IRC6_2017.cl_211_2_braking_force` raises `UnboundLocalError` for one or two lanes (`braking_force_2` is never set). The old report printed "N/A" for braking because of this.
+2. `cl_208_3_impact_factor` tests `KEY_VEHICLE[1]`, a non-empty string, so it always returns the tracked-vehicle value. The analysis applies 1.100 to every vehicle case, including Class A, where Cl. 208.2 gives 1.207 at a 30 m span.
+3. The grillage analysis loads only the Table 6A Class A / 70R combinations; the vehicle ticks and braking inputs of the Loading tab do not reach the analysis.
+4. The end diaphragm design finds no member force above its tolerance, so `end_diaphragm_design_results` is empty and no end diaphragm member checks are reported.
+5. `defaults.py` stores the crash barrier area in mm² while the Additional Inputs field and its compute function use m².
+6. `defaults.py` writes the girder depth in mm, while the bracing designs read the same key as metres.
+
+## Known limits
+
+- In `array` and `longtable`, the padding after a row is measured from the row's first line, so a row whose text wraps gets less space below it than a single-line row. Fixing this means patching LaTeX internals (`\@array`, `\LT@array`); not worth the risk.
+- Table 5.1 lists 13 properties per girder and now takes one page per girder, because a girder block no longer breaks across pages.
+- Rolled and welded end diaphragms have no design check in the backend, so they have no utilization chart.
+
+## Files
+
+| File | Change |
+|---|---|
+| `core/reports/styles.py` | new: style module |
+| `core/reports/tables.py` | new: long table opening, width fitting, grouped rows |
+| `core/reports/charts.py` | new: utilization and quantity charts |
+| `core/reports/live_loads.py` | new: vehicle and footpath load rows |
+| `core/reports/report_generator.py` | preamble from the style module, watermark, PDF properties, document control, chapter selection |
+| `core/reports/executive_summary.py` | Critical Checks box, readable check names, girder filter |
+| `core/reports/chap2.py` to `chap8.py` | tables through `longtable_begin`, style names, the fixes above |
+| `core/reports/report_utils.py` | numbered figure captions, `≤`/`≥` handling |
+| `core/boq/boq_generator.py` | end diaphragm rows, crash barrier area |
+| `core/utils/codes/irc6_2017.py` | optional `tracked` argument for Cl. 208.3 |
+| `desktop/ui/dialogs/report_options.py` | preview flag, summary charts item |
+| `tests/...` | 35 tests |
+| `tools/build_sample_report.py` | sample report script |
