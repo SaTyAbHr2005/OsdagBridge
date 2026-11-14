@@ -146,11 +146,11 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
     # The design results also hold grillage members that are not girders of
     # the bridge (G5, G6 for four girders); Chapter 5 reports G1..Gn only.
     try:
-        girders = {f"G{i}" for i in range(1, int(input_dict.get(KEY_TS_NO_OF_GIRDERS) or 0) + 1)}
+        bridge_girders = {f"G{i}" for i in range(1, int(input_dict.get(KEY_TS_NO_OF_GIRDERS) or 0) + 1)}
     except (TypeError, ValueError):
-        girders = set()
+        bridge_girders = set()
     for g, gd in per_girder.items():
-        if str(g).startswith("EB") or (girders and str(g) not in girders):
+        if str(g).startswith("EB") or (bridge_girders and str(g) not in bridge_girders):
             continue
         for chk in (gd.get("checks") or []):
             try:
@@ -166,8 +166,8 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
             if is_fail and name and name not in failing:
                 failing.append(name)
             if is_fail and name:
-                girders, worst = girder_failures.setdefault(name, ([], [None]))
-                girders.append(str(g))
+                failed, worst = girder_failures.setdefault(name, ([], [None]))
+                failed.append(str(g))
                 if dcr is not None and (worst[0] is None or dcr > worst[0]):
                     worst[0] = dcr
             if dcr is not None:
@@ -203,8 +203,8 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
 
     # Rows of the Critical Checks box: failing girder checks, then any other
     # component whose utilization exceeds 1.0.
-    failures = [(name, ", ".join(girders), worst[0], "sec:plate-girder")
-                for name, (girders, worst) in girder_failures.items()]
+    failures = [(name, ", ".join(failed), worst[0], "sec:plate-girder")
+                for name, (failed, worst) in girder_failures.items()]
     for key, value in deck_results.items():
         ratio = _max_float([value]) if str(key).startswith("ur_") else None
         if ratio is not None and ratio > 1.0:
