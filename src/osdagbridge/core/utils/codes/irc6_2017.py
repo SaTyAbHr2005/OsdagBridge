@@ -520,29 +520,33 @@ class IRC6_2017:
         return round(IM, 3)
     
     @staticmethod
-    def cl_208_3_impact_factor(span):
+    def cl_208_3_impact_factor(span, tracked=None):
         """
-        Returns the impact factor (IM) for Class AA and Class 70R loading 
+        Returns the impact factor (IM) for Class AA and Class 70R loading
         according to IRC:6-2017 Clause 208.3.
 
         Parameters:
             span (float): span in metres
+            tracked (bool | None): True for tracked, False for wheeled
+                vehicles. None keeps the original selection from KEY_VEHICLE.
         Returns:
             float: impact factor (IM)
         """
+        if tracked is None:
+            tracked = bool(KEY_VEHICLE[1])
         if span < 9.0: #span less than 9 m
-            if KEY_VEHICLE[1]: # Class70R(T)
+            if tracked: # Class70R(T)
                 if span < 5.0:
                     IM = 0.25
                 if span >= 5.0:
                     IM = 0.10
-            elif KEY_VEHICLE[0]: # Class70R(W)
+            else: # Class70R(W)
                 IM = 0.25
-        
+
         elif 9.0 <= span <= 45.0: #span between 9 m and 45 m
-            if KEY_VEHICLE[1]: # Class70R(T)
+            if tracked: # Class70R(T)
                 IM = 0.10
-            elif KEY_VEHICLE[0]: # Class70R(W)
+            else: # Class70R(W)
                 if span < 23.0:
                     IM = 0.25
                 if span >= 23.0:
