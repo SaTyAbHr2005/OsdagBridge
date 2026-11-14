@@ -149,7 +149,16 @@ logger = logging.getLogger(__name__)
 # PREAMBLE
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def preamble(project_name, job_number, report_date, report_version='Rev 0'):
+def _preview_watermark() -> str:
+    """Diagonal mark on every page of a preview, so a printed preview is not
+    taken for an issued report."""
+    return (r"\usepackage{draftwatermark}" "\n"
+            r"\SetWatermarkText{\bfseries\sffamily PREVIEW --- NOT FOR CONSTRUCTION}" "\n"
+            r"\SetWatermarkColor[gray]{0.8}" "\n"
+            r"\SetWatermarkScale{0.85}" "\n")
+
+
+def preamble(project_name, job_number, report_date, report_version='Rev 0', preview=False):
     pn = _tex(project_name)
     jn = _tex(job_number)
     rd = _tex(report_date)
@@ -169,6 +178,7 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \usepackage{fancyhdr}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
+""" + (_preview_watermark() if preview else "") + r"""
 \usepackage{setspace}
 \usepackage{enumitem}
 \usepackage{caption}
@@ -334,6 +344,7 @@ class ReportOptions:
     include_figures: bool
     include_toc: bool
     include_pdf: bool
+    preview: bool = False        # opened from "Preview PDF", not saved as an issue
 
 @dataclass
 class ReportRequest:
@@ -856,7 +867,8 @@ def generate_report(payload, request):
             span_m = float(payload.inputs.get(KEY_SPAN, 0) or 0)
 
             doc_parts = []
-            doc_parts.append(preamble(payload.metadata.project_name, payload.metadata.job_number, payload.metadata.report_date, payload.metadata.subtitle or 'Rev 0'))
+            doc_parts.append(preamble(payload.metadata.project_name, payload.metadata.job_number, payload.metadata.report_date, payload.metadata.subtitle or 'Rev 0',
+                                      preview=request.options.preview))
             doc_parts.append(title_page(payload.metadata, osdag_logo_latex, org_logo_latex))
 
             if payload.options.include_toc:

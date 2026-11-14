@@ -501,7 +501,7 @@ class ReportOptionsDialog(QDialog):
 
     # ── build report request ─────────────────────────────────────────
 
-    def build_request(self, output_path: str) -> ReportRequest:
+    def build_request(self, output_path: str, preview: bool = False) -> ReportRequest:
         output_path = os.path.abspath(output_path)
         output_dir = os.path.dirname(output_path)
         if not output_dir:
@@ -532,7 +532,8 @@ class ReportOptionsDialog(QDialog):
             sections=checked_sections,
             include_figures=include_figures,
             include_toc=True,
-            include_pdf=True
+            include_pdf=True,
+            preview=preview,
         )
 
         return ReportRequest(
@@ -546,7 +547,7 @@ class ReportOptionsDialog(QDialog):
         import tempfile
         tmp_dir = tempfile.mkdtemp(prefix="osdag_preview_")
         path = os.path.join(tmp_dir, "preview_report.pdf")
-        self.request = self.build_request(path)
+        self.request = self.build_request(path, preview=True)
         self.is_preview = True
         self.accept()
 
