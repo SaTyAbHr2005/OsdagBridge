@@ -3,41 +3,36 @@ from typing import List
 from osdagbridge.core.utils.common import (
     KEY_DESIGN_MODE
 )
+from .report_utils import _tex
 from .styles import TABLE
 from .tables import longtable_begin
 
 
-def ch8_design_log(log_entries: List[str], input_dict: dict) -> str:
-    """Render Chapter 8 using real log_entries, matching Osdag color convention."""
-
-    lines_tex = []
-    if log_entries:
-        for entry in log_entries:
-            for raw_line in entry.split('\n'):
-                line = raw_line.strip()
-                if not line:
-                    continue
-                escaped = (line
-                    .replace('_', r'\_')
-                    .replace('%', r'\%')
-                    .replace('&', r'\&')
-                    .replace('#', r'\#'))
-                upper = line.upper()
-                if 'WARNING' in upper:
-                    lines_tex.append(
-                        rf'\textcolor{{logWarning}}{{{escaped}}}\\')
-                elif 'ERROR' in upper:
-                    lines_tex.append(
-                        rf'\textcolor{{logError}}{{{escaped}}}\\')
-                elif 'INFO' in upper:
-                    lines_tex.append(
-                        rf'\textcolor{{osdagGreen}}{{{escaped}}}\\')
-                else:
-                    continue  # skip lines without a known level — Osdag patter
-
+def ch8_standards(input_dict: dict) -> str:
+    """Chapter 8: design standards, assumptions and known limitations."""
     mode = str(input_dict.get(KEY_DESIGN_MODE, 'Optimized')).strip().lower()
-    is_custom = mode in {'custom', 'customized'}
-    return _ch8_assumptions(is_custom)
+    return _ch8_assumptions(mode in {'custom', 'customized'})
+
+
+def design_log_chapter(log_entries: List[str]) -> str:
+    """Chapter 9: the stage-completion log of the design run, coloured by level
+    (success lines in the PASS green, warnings and errors in the log colours)."""
+    lines = []
+    for entry in log_entries or []:
+        for raw_line in entry.split('\n'):
+            line = raw_line.strip()
+            if not line:
+                continue
+            upper = line.upper()
+            colour = 'logError' if 'ERROR' in upper else 'logWarning' if 'WARNING' in upper else 'statusPass'
+            # One paragraph per line: a line starting with "[12:00:01]" after
+            # a \\ would be read as the optional skip of the line break.
+            lines.append(r'\noindent\textcolor{' + colour + '}{' + _tex(line) + r'}\par')
+    if not lines:
+        return ""
+    return ("\n" r"\chapter{Design Log}" "\n" r"\label{ch:design-log}" "\n"
+            r"The log below records each stage of the design run that produced this report." "\n\n"
+            r"{\small\ttfamily\raggedright" "\n" + "\n".join(lines) + "\n}\n")
 
 
 def _ch8_assumptions(is_custom: bool) -> str:

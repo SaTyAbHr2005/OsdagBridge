@@ -129,7 +129,7 @@ from .chap4 import ch4_analysis
 from .chap5 import ch5_design_checks
 from .chap6 import ch6_drawings
 from .chap7 import ch7_quantities
-from .chap8 import ch8_design_log
+from .chap8 import ch8_standards, design_log_chapter
 from .chap9 import references
 
 logger = logging.getLogger(__name__)
@@ -915,15 +915,19 @@ def generate_report(payload, request):
             if 'drawings' in secs and payload.options.include_figures:
                 doc_parts.append(ch6_drawings(fig_paths))
 
-            doc_parts.append(ch7_quantities(payload.inputs, fig_dir=chart_dir))
+            if 'quantities' in secs:
+                doc_parts.append(ch7_quantities(payload.inputs, fig_dir=chart_dir))
 
             mode = str(payload.inputs.get(KEY_DESIGN_MODE, "Optimized")).strip().lower()
             is_custom = mode in {"custom", "customized"}
         
 
-            doc_parts.append(ch8_design_log(payload.log_entries, payload.inputs))
-
-            doc_parts.append(references())
+            if 'standards' in secs:
+                doc_parts.append(ch8_standards(payload.inputs))
+            if 'design_log_window' in secs:
+                doc_parts.append(design_log_chapter(payload.log_entries))
+            if 'references' in secs:
+                doc_parts.append(references())
             doc_parts.append(r"\end{document}")
 
             full_tex = "\n".join(doc_parts)
