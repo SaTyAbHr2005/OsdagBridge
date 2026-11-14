@@ -281,6 +281,7 @@ class ReportOptionsDialog(QDialog):
         ("Chapter 8 — Standards & Assumptions",          "standards",        False),
         ("Chapter 9 — Design Log",                       "design_log_window", False),
         ("Chapter 10 — References",                      "references",       False),
+        ("Summary charts (Sections 5.5 and 7)",          "summary_charts",   False),
     ]
 
     def setup_page2(self):

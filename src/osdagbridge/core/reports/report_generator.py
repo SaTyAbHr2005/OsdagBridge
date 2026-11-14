@@ -892,6 +892,8 @@ def generate_report(payload, request):
             # selected in the report-options dialog (TOC). The first three
             # chapters are locked in the UI, so they are always present.
             secs = payload.options.sections
+            # Summary charts are drawn only when ticked in the report options.
+            chart_dir = tmp_images if 'summary_charts' in secs else None
 
             doc_parts.append(executive_summary(payload.inputs, payload.output_dict, fig_paths))
             doc_parts.append(ch1_project_info(payload.metadata))
@@ -902,11 +904,11 @@ def generate_report(payload, request):
             if 'analysis' in secs:
                 doc_parts.append(ch4_analysis(payload.analysis_summary, fig_paths, bridge, span_m))
             if 'design_checks' in secs:
-                doc_parts.append(ch5_design_checks(payload.design_checks, bridge, fig_dir=tmp_images))
+                doc_parts.append(ch5_design_checks(payload.design_checks, bridge, fig_dir=chart_dir))
             if 'drawings' in secs and payload.options.include_figures:
                 doc_parts.append(ch6_drawings(fig_paths))
 
-            doc_parts.append(ch7_quantities(payload.inputs, fig_dir=tmp_images))
+            doc_parts.append(ch7_quantities(payload.inputs, fig_dir=chart_dir))
 
             mode = str(payload.inputs.get(KEY_DESIGN_MODE, "Optimized")).strip().lower()
             is_custom = mode in {"custom", "customized"}
