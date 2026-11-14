@@ -103,7 +103,7 @@
 #                                                          else → CustomMessageBox("Report Saved")
 #==============================================================================
 
-import os, shutil, logging, datetime, tempfile, subprocess
+import os, re, shutil, logging, datetime, tempfile, subprocess
 from dataclasses import dataclass, field
 from typing import Optional, List, Literal
 
@@ -158,9 +158,16 @@ def _preview_watermark() -> str:
             r"\SetWatermarkScale{0.85}" "\n")
 
 
-def _pdf_properties(project_name: str, author: str) -> str:
+def _pdf_text(value) -> str:
+    """Plain text for a PDF document property. TeX markup is not allowed in
+    PDF strings, so characters LaTeX treats specially become spaces."""
+    return " ".join(re.sub(r"[\\{}$%&#^~_]", " ", str(value or "")).split())
+
+
+def _pdf_properties(project_name, author) -> str:
     """Document properties shown by PDF viewers and file search, and the
     bookmark panel opened at chapter level."""
+    project_name, author = _pdf_text(project_name), _pdf_text(author)
     title = "Design Report" + (" --- " + project_name if project_name else "")
     return (r"\usepackage{bookmark}" "\n"
             r"\hypersetup{pdftitle={" + title + "}, pdfauthor={" + author + "},"
@@ -188,7 +195,7 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0', prev
 \usepackage{float}
 \usepackage{fancyhdr}
 \usepackage[hidelinks]{hyperref}
-""" + _pdf_properties(pn, _tex(author)) + r"""\usepackage{xcolor}
+""" + _pdf_properties(project_name, author) + r"""\usepackage{xcolor}
 """ + (_preview_watermark() if preview else "") + r"""
 \usepackage{setspace}
 \usepackage{enumitem}
