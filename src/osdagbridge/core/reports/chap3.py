@@ -28,6 +28,7 @@ from osdagbridge.core.utils.common import (
     KEY_TL_LOWEST_MIN_TEMP,
     KEY_TL_TEMP_FALL,
     KEY_TL_TEMP_RISE,
+    KEY_WC_DENSITY,
     KEY_WC_MATERIAL,
     KEY_WC_THICKNESS,
     KEY_WL_AVG_EXPOSED_HEIGHT,
@@ -48,6 +49,18 @@ from .tables import longtable_begin
 
 def _num(value, digits):
     return "---" if value is None else f"{value:.{digits}f}"
+
+
+def _wearing_course_load(input_dict) -> str:
+    """Material, thickness and density of the wearing course and the surface load they give."""
+    material = _tex(input_dict.get(KEY_WC_MATERIAL) or "---")
+    try:
+        thickness_mm = float(input_dict.get(KEY_WC_THICKNESS))
+        density = float(input_dict.get(KEY_WC_DENSITY))
+    except (TypeError, ValueError):
+        return material
+    return (f"{material}, {thickness_mm:g} mm thick at {density:g} kN/m\\textsuperscript{{3}} "
+            f"= {thickness_mm / 1000.0 * density:.2f} kN/m\\textsuperscript{{2}}")
 
 
 def _vehicle_live_load_table(input_dict) -> str:
@@ -270,7 +283,7 @@ This section summarizes all loads applied to the bridge and the load combination
 
 \vspace{\tablegap}
 """ + longtable_begin(r"""|L{5.5cm}|p{10.0cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value} \\""", caption=r"""Dead Load for Surfacing (DW)""") + r"""
-\textnormal{Wearing Course Load} & """ + (_render_value(input_dict, KEY_WC_MATERIAL)) + r""" x """ + (_render_value(input_dict, KEY_WC_THICKNESS)) + r""" \\[\rowpad]
+\textnormal{Wearing Course Load} & """ + _wearing_course_load(input_dict) + r""" \\[\rowpad]
 \hline
 \textnormal{Additional SIDL (Crash Barrier)} & """ + (_render_value(input_dict, KEY_CB_LOAD)) + r""" kN/m per barrier \\[\rowpad]
 \hline
