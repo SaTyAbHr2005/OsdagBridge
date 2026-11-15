@@ -120,7 +120,7 @@ from osdagbridge.core.utils.common import (
 
 from osdagbridge.core.reports.report_utils import _tex
 from . import styles
-from .tables import fit_to_text_width, keep_rows_together
+from .tables import keep_rows_together
 from .executive_summary import executive_summary
 from .chap1 import ch1_project_info
 from .chap2 import ch2_input_parameters
@@ -303,26 +303,8 @@ def title_page(m, osdag_logo, org_logo):
 \textbf{Report Version} & """ + _tex(m.subtitle or 'Rev 0') + r""" \\
 \hline
 \end{tabular}
-\vfill
-""" + _document_control(m) + r"""
 \end{titlepage}
 """
-
-
-def _document_control(m) -> str:
-    """Revision block of the title page: who prepared, checked and approved this issue.
-
-    "Approved" is left blank for a signature; the report form does not collect it.
-    """
-    spec = fit_to_text_width(r"|C{1.2cm}|C{2.2cm}|L{4.6cm}|C{2.6cm}|C{2.6cm}|C{2.6cm}|")
-    description = " ".join(str(m.additional_comments or "").split())
-    cells = (m.subtitle or "Rev 0", m.report_date, description or "---", m.designer, m.reviewer, "")
-    return (r"{\tablesmallfont\noindent\textbf{Document Control}\\[\gapline]" "\n"
-            r"\begin{tabular}{" + spec + "}\n"
-            r"\hline \tableheader \textbf{Rev} & \textbf{Date} & \textbf{Description}"
-            r" & \textbf{Prepared} & \textbf{Checked} & \textbf{Approved} \\ \hline" "\n"
-            + " & ".join(_tex(c) for c in cells) + r" \rule{0pt}{6mm} \\ \hline" "\n"
-            r"\end{tabular}\par}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
