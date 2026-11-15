@@ -53,6 +53,11 @@ def _num(value, digits):
     return "---" if value is None else f"{value:.{digits}f}"
 
 
+# Wind and seismic forces are generated inside the grillage analysis as load
+# cases; where no summary value is stored, the table says where to find them.
+_APPLIED = r"Applied in the grillage analysis as load case {} (see Chapter 4)"
+
+
 def _wearing_course_load(input_dict) -> str:
     """Material, thickness and density of the wearing course and the surface load they give."""
     material = _tex(input_dict.get(KEY_WC_MATERIAL) or "---")
@@ -313,11 +318,11 @@ This section summarizes all loads applied to the bridge and the load combination
 \hline
 \textnormal{Hourly Wind Pressure, Pz} & """ + pz_str + r""" \\[\rowpad]
 \hline
-\textnormal{Transverse Wind Force} & """ + (_render_value(input_dict, KEY_WL_TRANSVERSE_WIND_FORCE, ' kN')) + r""" \\[\rowpad]
+\textnormal{Transverse Wind Force} & """ + (_render_value(input_dict, KEY_WL_TRANSVERSE_WIND_FORCE, ' kN') or _APPLIED.format("WL Transverse")) + r""" \\[\rowpad]
 \hline
-\textnormal{Longitudinal Wind Force} & """ + (_render_value(input_dict, KEY_WL_LONGITUDINAL_WIND_FORCE, ' kN')) + r""" \\[\rowpad]
+\textnormal{Longitudinal Wind Force} & """ + (_render_value(input_dict, KEY_WL_LONGITUDINAL_WIND_FORCE, ' kN') or _APPLIED.format("WL Longitudinal")) + r""" \\[\rowpad]
 \hline
-\textnormal{Vertical Wind Force} & """ + (_render_value(input_dict, KEY_WL_VERTICAL_WIND_FORCE, ' kN')) + r""" \\[\rowpad]
+\textnormal{Vertical Wind Force} & """ + (_render_value(input_dict, KEY_WL_VERTICAL_WIND_FORCE, ' kN') or _APPLIED.format("WL Uplift")) + r""" \\[\rowpad]
 \hline
 \end{longtable}
 
@@ -337,9 +342,9 @@ This section summarizes all loads applied to the bridge and the load combination
 \hline
 \textnormal{Vertical Seismic Coefficient, Av} & """ + (_render_value(input_dict, KEY_SL_VERTICAL_COEFF)) + r""" \\[\rowpad]
 \hline
-\textnormal{Horizontal Seismic Force (longitudinal)} & """ + '' + r""" kN \\[\rowpad]
+\textnormal{Horizontal Seismic Force (longitudinal)} & """ + _APPLIED.format("EQ\\_X") + r""" \\[\rowpad]
 \hline
-\textnormal{Horizontal Seismic Force (transverse)} & """ + '' + r""" kN \\[\rowpad]
+\textnormal{Horizontal Seismic Force (transverse)} & """ + _APPLIED.format("EQ\\_Y") + r""" \\[\rowpad]
 \hline
 \end{longtable}
 
