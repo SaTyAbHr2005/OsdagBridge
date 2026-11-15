@@ -402,7 +402,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
     t57_rows = []
     for lbl, _ in girder_entries:
         t57_rows.append(
-            r"\multirow{6}{*}{\makecell{" + lbl + r"""}} & \textnormal{Shear Buckling Design Method} & """ + _render_value(bridge.output_dict, KEY_SD_STIFF_METHOD) + r""" \\*[\rowpad]
+            r"\multirow{6}{*}{\makecell{" + lbl + r"""}} & \textnormal{Shear Buckling Design Method} & """ + _tex(str(bridge.output_dict.get(KEY_SD_STIFF_METHOD) or "---").replace("_", "-").capitalize()) + r""" \\*[\rowpad]
 \groupcline{2-3}
  & \textnormal{Intermediate Stiffener Thickness""" + _stiff_req + r""" (mm)} & """ + _stiff(KEY_SD_STIFF_INT_THICK) + r""" \\*[\rowpad]
 \groupcline{2-3}
@@ -1237,7 +1237,7 @@ This section presents all structural design checks performed by OsdagBridge. For
 """ + longtable_begin(r"""|C{2.5cm}|C{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{3.5cm}|C{2.5cm}|""", r"""\tableheader \textbf{Girder} &\textbf{Stress Range, $\Delta\sigma$ (MPa)} & \textbf{Fatigue Limit, $f_{fd}$ (MPa)} & \textbf{Utilization Ratio} & \textbf{Status} \\[\rowpad]""", caption=r"""Serviceability -- Fatigue Assessment""") + r"""
 """ + t512_content + r"""
 \end{longtable}
-\noindent\textit{Note: IRC 22 Cl. 605 --- governing of normal and shear fatigue (worst by DCR). Capacity reduction factor $\mu_r$ applied where plate thickness > 25 mm.}
+\noindent\textit{Note: IRC 22 Cl. 605 --- governing of normal and shear fatigue (worst by DCR). Capacity reduction factor $\mu_r$ applied where plate thickness $>$ 25 mm.}
 
 \vspace{\tablegap}
 """ + longtable_begin(r"""|C{1.6cm}|>{\centering\arraybackslash}p{3.6cm}|C{2.4cm}|C{2.0cm}|C{2.1cm}|C{1.7cm}|C{1.5cm}|""", r"""\tableheader \textbf{Girder} & \textbf{Controlling LC / Combination} & \textbf{Controlling Check} & \textbf{Demand} & \textbf{Capacity} & \textbf{UR} & \textbf{Status} \\[\rowpad]""", caption=r"""Girder Design Summary (DCR / Utilization Ratio)""") + r"""

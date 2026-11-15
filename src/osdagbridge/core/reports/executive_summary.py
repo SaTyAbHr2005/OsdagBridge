@@ -280,7 +280,9 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
     ur_cells = ' & '.join([ur] * n_cols)
     urs = f"Utilization Ratio & {ur_cells} \\\\"
 
-    table1 = (r'\noindent\textbf{Table 1 -- Final Bridge Geometry (after optimization)}' + '\n\n'
+    # Keep the title with its table instead of leaving it at a page bottom.
+    table1 = (r'\needspace{12\baselineskip}' + '\n'
+              r'\noindent\textbf{Table 1 -- Final Bridge Geometry (after optimization)}' + '\n\n'
               r'\vspace{\gapsmall}' + '\n'
               r'\noindent' + '\n'
               r'\begin{tabular}{' + col_spec + '}\n'

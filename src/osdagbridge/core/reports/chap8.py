@@ -1,3 +1,4 @@
+import re
 from typing import List
 
 from osdagbridge.core.utils.common import (
@@ -20,8 +21,12 @@ def design_log_chapter(log_entries: List[str]) -> str:
     lines = []
     for entry in log_entries or []:
         for raw_line in entry.split('\n'):
-            line = raw_line.strip()
-            if not line:
+            # The console log draws banners with runs of - and = and spaced
+            # capitals ("A N A L Y S I S"); keep only the words.
+            line = re.sub(r"[-=]{5,}", " ", raw_line)
+            line = re.sub(r"\b(\w) (?=\w\b)", r"\1", line)
+            line = " ".join(line.split())
+            if not line or re.fullmatch(r"\[[^\]]*\]", line):
                 continue
             upper = line.upper()
             colour = 'logError' if 'ERROR' in upper else 'logWarning' if 'WARNING' in upper else 'statusPass'
@@ -94,7 +99,7 @@ IS 2062 & 2011 & Structural steel - yield and ultimate strength by grade \\
     \item All girders are modelled as simply supported; continuous spans are not currently supported.
     \item A 3D grillage model (OSPGrillage) is used for load distribution. Grillage members carry composite section properties after the construction stage.
     \item The transverse member forces are computed using an approximate 2D frame analogy. For irregular or skewed geometries, a 3D FEM is recommended.
-    \item Fixed bearing stiffness is modelled as $k = 1{,}000{,}000 \,\text{kN/m}$ (virtually rigid); free/expansion bearing as $k = 100 \, \text{kN/m}$.
+    \item Fixed bearing stiffness is modelled as $k = 1{,}000{,}000 \,\text{kN/m}$ (virtually rigid); free or expansion bearing as $k = 100 \, \text{kN/m}$.
     \item Construction stage sequence analysis is approximate. Detailed staged analysis should be performed for long-term deflection checks.
 \end{itemize}
 

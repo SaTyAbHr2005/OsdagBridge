@@ -299,7 +299,7 @@ def title_page(m, osdag_logo, org_logo):
 \hline
 \textbf{Date} & """ + _tex(m.report_date) + r""" \\
 \hline
-\textbf{Report Version} & """ + (_tex(m.subtitle) if m.subtitle else '') + r""" \\
+\textbf{Report Version} & """ + _tex(m.subtitle or 'Rev 0') + r""" \\
 \hline
 \end{tabular}
 \vfill
