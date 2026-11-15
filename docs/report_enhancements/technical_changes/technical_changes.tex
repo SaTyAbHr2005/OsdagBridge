@@ -69,7 +69,7 @@
 
 \section{Summary}
 
-The report generator in \file{src/osdagbridge/core/reports/} was refactored and extended to cover the six items of the task. \code{Report_Before.pdf} and \code{Report_After.pdf} were built from the same inputs (30\,m span, 7.5\,m carriageway, Mumbai (Colaba), every other input at its default) with the same script, so every difference between the two reports comes from the code changes. The work is 88 commits on top of \file{upstream/dev}.
+The report generator in \file{src/osdagbridge/core/reports/} was refactored and extended to cover the six items of the task. \code{Report_Before.pdf} and \code{Report_After.pdf} were built from the same inputs (30\,m span, 7.5\,m carriageway, Mumbai (Colaba), every other input at its default) with the same script, so every difference between the two reports comes from the code changes. The work is 91 commits on top of \file{upstream/dev}.
 
 \begin{center}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}Xll}
@@ -224,11 +224,16 @@ Ahmedabad, Gujarat & 40\,m, 11\,m (3 lanes, 5 girders) & footpaths on both sides
 Dhubri, Assam (seismic zone V) & 25\,m, 7.5\,m & footpath on one side \\
 Chennai, Tamil Nadu & 35\,m, 9\,m & median; 70R wheeled, 70R bogie and fatigue vehicles unticked; no Class SV braking; braking eccentricity 1.5\,m \\
 Bagalkote, Karnataka & 30\,m, 7.5\,m & M35 deck concrete \\
+Alleppy, Kerala & 20\,m, 7.5\,m & rolled-beam end diaphragms at one support of each girder pair, cross bracing at the other \\
+Bagati, West Bengal & 30\,m, 15\,m (4 lanes, 7 girders) & footpaths on both sides \\
+Jaipur, Rajasthan & 15\,m, 7.5\,m & footpath on one side; a custom three-axle vehicle \\
+Ludhiana, Punjab & 30\,m, 7.5\,m & Custom design mode \\
+Mumbai, Maharashtra & 30\,m, 7.5\,m & Preview build with Chapters 7 and 8 and the summary charts left out \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-All four compiled without LaTeX errors. The location values (seismic zone and zone factor, wind speed, shade temperatures), the lane and girder counts, the footpath and median rows, the vehicle table and the impact factors all followed the inputs. The runs found three faults, now fixed: the bill of materials printed ``M40'' and ``Fe~500'' whatever grades were chosen, computed widths printed as 15.649999999999999, and chart labels such as ``Compression'' were split mid-word.
+All nine compiled without LaTeX errors or broken references. The location values (seismic zone and zone factor, wind speed, shade temperatures), the lane and girder counts, the footpath and median rows, the vehicle table with the custom vehicle and the span-dependent impact factors, the end diaphragm rows of the bill of materials, the design mode, and the chapter list of the preview all followed the inputs. The runs found five faults, now fixed: the bill of materials printed ``M40'' and ``Fe~500'' whatever grades were chosen, computed widths printed as 15.649999999999999, chart labels such as ``Compression'' were split mid-word, Table~1 ran over its column rules with seven girders, and girder pairs from G10 on would have been listed out of order.
 
 \section{Files altered}
 
@@ -367,7 +372,7 @@ python tools/build_sample_report.py other.pdf --state Assam --district Kamrup --
     --main-input "geometry.footpath=Single Side"
 \end{lstlisting}
 
-The script opens the application, enters the inputs, runs Design and then Generate Report, so the PDF goes through the same code as a user's report. \code{--main-input} sets a main-page field before Design, and \code{--set-input} changes a Loading tab input that only the report reads.
+The script opens the application, enters the inputs, runs Design and then Generate Report, so the PDF goes through the same code as a user's report. \code{--main-input} sets a main-page field before Design, \code{--pre-input} sets an Additional Inputs value the design reads, \code{--set-input} changes a Loading tab input that only the report reads, and \code{--skip-section} leaves a chapter out. A dialog the script cannot fill in is reported and closed, so a run never waits on one.
 
 \section{Backend issues found}
 
@@ -381,6 +386,7 @@ These are outside the report generator and were left for separate issues.
   \item \code{defaults.py} stores the crash barrier area in mm\textsuperscript{2} and the girder depth in mm, while other code reads them in m\textsuperscript{2} and m.
   \item With a 10\textdegree{} skew (40\,m span, five girders) the backend returned no grillage results, so Table~4.1 says no results are available.
   \item Changing the Footpath dropdown raises \code{AttributeError} in \code{input_dock.py}.
+  \item The custom vehicle entry in the Loading tab is commented out in \file{ui_fields_additional_input.py}, so users cannot add custom vehicles yet. The report already lists them, as the Jaipur run shows.
 \end{enumerate}
 
 \section{Known limits}
