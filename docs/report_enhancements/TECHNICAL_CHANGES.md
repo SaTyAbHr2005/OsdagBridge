@@ -1,15 +1,15 @@
 # OsdagBridge design report: technical changes
 
-Branch `report-enhancements`: 68 commits of code and tests on top of `upstream/dev`, plus this document.
+Branch `report-enhancements`: 82 commits of code and tests on top of `upstream/dev`, plus this document.
 `Report_Before.pdf` and `Report_After.pdf` in this folder were built from the same inputs (span 30 m, carriageway 7.5 m, Mumbai (Colaba), all other inputs at their defaults) with the same script, so every difference between them comes from the code changes below.
 
 | | Before | After |
 |---|---|---|
-| Pages | 56 | 64 |
+| Pages | 56 | 62 |
 | Long tables that repeat their header on a new page | 2 of 49 | 51 of 51 |
 | Rows running into the footer | page 30 (G4 stiffener row) | none |
 | Charts | none | 5 (3 utilization, 2 material) |
-| Automated tests for the report | none | 35 |
+| Automated tests for the report | none | 38 |
 
 The extra pages come from the new List of Figures and List of Tables, the charts, the end diaphragm rows, the design log chapter and Table 5.1, which now gives each girder its own page instead of breaking a girder's rows across two.
 
@@ -70,7 +70,7 @@ Grouped tables (one block of rows per girder or per bracing panel) use `group_ro
 Cause of the page 30 overlap: the footer rule sat about 6 pt below the last text line, and the stiffener table broke inside the G4 group, so the centred "G4" label hung below the cut and into the footer.
 
 - `headheight` and `footskip` are now set in the page geometry. This also removed 54 fancyhdr warnings.
-- The footer rule moved clear of the text block, and the "software default value" note moved below it.
+- The footer rule moved clear of the text block, and the "software default value" note now sits just above the rule, inside the footer.
 - Grouped tables no longer break inside a group (see Item 1).
 - Cell padding was rebalanced so single-line rows sit in the middle of the row.
 
@@ -96,6 +96,42 @@ The bill of materials had no end diaphragm rows. `boq_generator.end_diaphragm_qu
 
 Chapter 7 then shows two charts under the table: structural steel tonnage for girders, cross bracing and end diaphragms, and concrete volume (m³) next to reinforcement weight (MT). The second chart uses two panels with separate scales rather than one chart with two y-axes, because two scales on one axis invite comparing bar heights that have different units.
 
+## Fixes after a page-by-page review
+
+The finished report was read page by page in a PDF viewer at normal screen zoom. Each fix below is in the shared report code, so it applies to every table and page.
+
+### Rules of different weights
+
+longtable draws every `\hline` twice, one copy on each side of a possible page break. The two copies overlap exactly in the PDF, and at screen zoom a doubled line renders darker than the single vertical rules and `\cline`s next to it. `styles.py` now redefines longtable's rule so it is drawn once, with the page break after it. The header shading had a related problem: colortbl paints a cell's fill after the rules above and to the left of it, and viewers round fills out to whole pixels, so the fill covered part of those rules. The fill now stops one rule width short of every rule in the first header row; a second header row (`\tableheadernext`) fills to the top so a cell spanning both rows stays one colour. All rules are 0.75 pt, one screen pixel at 100 % zoom.
+
+### Tables split badly across pages
+
+`keep_rows_together()` in `tables.py` runs over the finished document. A table of six rows or fewer moves to the next page whole; a longer table is never broken after its first row or before its last, so no page carries one stray row. `\\*` alone was not enough, because longtable's `\hline` is itself a break point, so the rule after a locked row becomes `\hlinenobreak`.
+
+### Half-empty pages
+
+Five forced page breaks inside Chapters 2, 5 and 8 left the page before them mostly blank. They were removed; the sections and tables now follow on with the usual table gap.
+
+### Header words running out of their columns
+
+TeX never hyphenates the first word of a paragraph, so a long single heading such as "Longitudinal" ran over the column rule. The L, C and R column types now start with `\hspace{0pt}`, which lets that word hyphenate. The bracing capacity tables got wider Member and Section columns, and Table 1 in the executive summary is fitted to the text width like the other tables (it was 12.6 pt too wide).
+
+### Drawings far from their captions
+
+The six section previews in Chapter 6 are 300 × 300 px widget captures with the drawing in a small part of them. They are now cropped to the drawing and capped at 3.5 cm high, so Figures 6.8 to 6.14 sit directly above their captions.
+
+### Formulas touching the rule above
+
+A square root or stacked fraction is taller than a line of text, so it pushed against the rule above its row. `\tallcell{}` adds a 3 pt gap above such a cell only; ordinary rows keep their height.
+
+### Smaller fixes
+
+- The vehicle load note broke across a page right after "Impact factor = 1 +". It is now kept in one piece, and "1 + IM" cannot be split.
+- The header text of shaded rows sat one space to the right of the body text.
+- Page numbers: roman numerals for the contents and lists, and "Page n of N" counted from the executive summary.
+- Two labels named `sec:assumptions`; one is renamed.
+- Unbreakable clause references that ran past the margin.
+
 ## Additional changes
 
 | | Change | Why |
@@ -107,7 +143,7 @@ Chapter 7 then shows two charts under the table: structural steel tonnage for gi
 | A5 | "PREVIEW --- NOT FOR CONSTRUCTION" watermark on reports from the Preview button | A printed preview cannot pass as an issued report |
 | A6 | List of Figures, List of Tables, numbered plot captions, PDF title/author/subject, bookmarks opened at chapter level | Navigation in a long document |
 | A7 | "Summary charts" item in the report options | Users can leave the charts out |
-| A8 | 35 tests: style module, table helper, charts, live load selection, end diaphragm quantities, executive summary, design log, LaTeX compilation | The report had no tests |
+| A8 | 38 tests: style module, table helper, charts, live load selection, end diaphragm quantities, executive summary, design log, LaTeX compilation | The report had no tests |
 | A9 | `tools/build_sample_report.py` | Reproducible sample reports for before/after comparisons |
 
 Defects in existing code found and fixed on the way:
@@ -133,7 +169,8 @@ These are outside the report generator and are left for separate issues:
 ## Known limits
 
 - In `array` and `longtable`, the padding after a row is measured from the row's first line, so a row whose text wraps gets less space below it than a single-line row. Fixing this means patching LaTeX internals (`\@array`, `\LT@array`); not worth the risk.
-- Table 5.1 lists 13 properties per girder and now takes one page per girder, because a girder block no longer breaks across pages.
+- Table 5.1 lists 13 properties per girder and now takes one page per girder, because a girder block no longer breaks across pages. Other per-girder tables in Chapter 5 leave part of a page empty for the same reason.
+- Rules are all drawn at the same width, but at some zoom levels a viewer rounds a 0.75 pt line to one pixel and the next one to two, so one line can look a shade heavier than its neighbours. The difference comes from the screen; printed, the lines look the same.
 - Rolled and welded end diaphragms have no design check in the backend, so they have no utilization chart.
 
 ## Files
@@ -141,7 +178,7 @@ These are outside the report generator and are left for separate issues:
 | File | Change |
 |---|---|
 | `core/reports/styles.py` | new: style module |
-| `core/reports/tables.py` | new: long table opening, width fitting, grouped rows |
+| `core/reports/tables.py` | new: long table opening, width fitting, grouped rows, page-break control |
 | `core/reports/charts.py` | new: utilization and quantity charts |
 | `core/reports/live_loads.py` | new: vehicle and footpath load rows |
 | `core/reports/report_generator.py` | preamble from the style module, watermark, PDF properties, document control, chapter selection |
@@ -151,5 +188,5 @@ These are outside the report generator and are left for separate issues:
 | `core/boq/boq_generator.py` | end diaphragm rows, crash barrier area |
 | `core/utils/codes/irc6_2017.py` | optional `tracked` argument for Cl. 208.3 |
 | `desktop/ui/dialogs/report_options.py` | preview flag, summary charts item |
-| `tests/...` | 35 tests |
+| `tests/...` | 38 tests |
 | `tools/build_sample_report.py` | sample report script |
