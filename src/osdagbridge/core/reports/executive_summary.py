@@ -79,6 +79,24 @@ def _critical_checks_box(failures, governing) -> str:
             + "\n".join(lines) + "\n" r"\end{minipage}}" "\n")
 
 
+def _outcomes(per_girder, failing, girder_ur, deck_results, cb_results, ed_results) -> str:
+    """Pass/fail line per component, from the same results as the summary table."""
+    def line(name, ur, has_results):
+        if not has_results:
+            return f"{name}: no member checks for this run"
+        if ur is not None and ur > 1.0:
+            return name + r": \statusfail{FAIL}" + f" (max UR {ur:.2f})"
+        return name + r": \statuspass{PASS}" + (f" (max UR {ur:.2f})" if ur is not None else "")
+
+    girder =(r"Plate girders: \statusfail{FAIL} (" + _tex(", ".join(failing)) + ")") if failing \
+        else line("Plate girders", girder_ur, bool(per_girder))
+    deck_ur = _max_float([v for k, v in deck_results.items() if str(k).startswith("ur_")])
+    cb_ur, ed_ur = _max_member_efficiency(cb_results), _max_member_efficiency(ed_results)
+    lines = [girder, line("Deck slab", deck_ur, deck_ur is not None),
+             line("Cross bracing", cb_ur, cb_ur is not None), line("End diaphragms", ed_ur, ed_ur is not None)]
+    return r"\noindent " + " \\\\\n".join(lines)
+
+
 def _max_float(values):
     """Return the largest value coercible to float, or None if there are none."""
     out = None
@@ -333,10 +351,7 @@ This section provides a concise summary of the bridge design, key inputs, govern
 \addcontentsline{toc}{section}{Key Design Outcomes Summary}
 \label{sec:key-outcomes}
 
-\noindent Girder design pass \\
-Cross bracing design pass \\
-End Diaphragm design pass \\
-Deck design pass
+""" + _outcomes(per_girder, failing, girder_max_ur, deck_results, cb_results, ed_results) + r"""
 
 \section*{Design Assumptions and Limitations}
 \addcontentsline{toc}{section}{Design Assumptions and Limitations}
