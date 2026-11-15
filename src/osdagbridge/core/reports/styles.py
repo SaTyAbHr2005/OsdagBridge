@@ -89,6 +89,7 @@ class TableStyle:
 @dataclass(frozen=True)
 class SpacingScale:
     # Vertical gaps between blocks of content, smallest first.
+    line: str = "3pt"       # between lines inside one boxed block
     small: str = "0.4em"    # a heading or note directly attached to a table
     block: str = "1em"      # paragraph or table followed by another table
     section: str = "2em"    # start of a new group within a section
@@ -281,6 +282,7 @@ def latex_definitions() -> str:
 
 \newlength{{\rowpad}}\setlength{{\rowpad}}{{{t.row_pad}}}
 \newlength{{\rowpadwide}}\setlength{{\rowpadwide}}{{{t.row_pad_wide}}}
+\newlength{{\gapline}}\setlength{{\gapline}}{{{SPACING.line}}}
 \newlength{{\gapsmall}}\setlength{{\gapsmall}}{{{SPACING.small}}}
 \newlength{{\tablegap}}\setlength{{\tablegap}}{{{SPACING.block}}}
 \newlength{{\sectiongap}}\setlength{{\sectiongap}}{{{SPACING.section}}}

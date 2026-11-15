@@ -56,9 +56,9 @@ def _critical_checks_box(failures, governing) -> str:
     ``governing`` is the "<check>, UR = x.xx" text of the highest UR.
     """
     verdict = r"\statusfail{FAIL}" if failures else r"\statuspass{PASS}"
-    lines = [r"\textbf{Critical Checks} \hfill Design verdict: " + verdict + r"\\[3pt]"]
+    lines = [r"\textbf{Critical Checks} \hfill Design verdict: " + verdict + r"\\[\gapline]"]
     if governing:
-        lines.append(r"Governing check: " + governing + r"\\[3pt]")
+        lines.append(r"Governing check: " + governing + r"\\[\gapline]")
     if failures:
         rows = "\n".join(
             _tex(check) + " & " + _tex(members) + " & "
@@ -69,9 +69,9 @@ def _critical_checks_box(failures, governing) -> str:
         header = (r"\tableheader \textbf{Failing Check} & \textbf{Members} & \textbf{Max UR}"
                   r" & \textbf{Details} \\")
         lines.append(r"\begin{tabular}{" + spec + "}\n" r"\hline " + header + r" \hline" "\n"
-                     + rows + "\n" r"\end{tabular}\\[3pt]")
+                     + rows + "\n" r"\end{tabular}\\[\gapline]")
     else:
-        lines.append(r"All design checks pass.\\[3pt]")
+        lines.append(r"All design checks pass.\\[\gapline]")
     lines.append(r"Every check is listed in Section~\ref{sec:overall-summary}.")
     return ("\n" r"\vspace{\tablegap}" "\n" r"\noindent\fcolorbox{"
             + ("statusFail" if failures else "statusPass")

@@ -140,7 +140,6 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # LaTeX template sections for OsdagBridge Design Report
 # Matches the LaTeX template used in the OsdagBridge desktop application.
-# Color: osdagGreen = #91B014
 # =============================================================================
 
 
@@ -318,7 +317,7 @@ def _document_control(m) -> str:
     spec = fit_to_text_width(r"|C{1.2cm}|C{2.2cm}|L{4.6cm}|C{2.6cm}|C{2.6cm}|C{2.6cm}|")
     description = " ".join(str(m.additional_comments or "").split())
     cells = (m.subtitle or "Rev 0", m.report_date, description or "---", m.designer, m.reviewer, "")
-    return (r"{\small\noindent\textbf{Document Control}\\[2pt]" "\n"
+    return (r"{\tablesmallfont\noindent\textbf{Document Control}\\[\gapline]" "\n"
             r"\begin{tabular}{" + spec + "}\n"
             r"\hline \tableheader \textbf{Rev} & \textbf{Date} & \textbf{Description}"
             r" & \textbf{Prepared} & \textbf{Checked} & \textbf{Approved} \\ \hline" "\n"

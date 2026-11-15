@@ -666,7 +666,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
         return (s + " kN") if s else ""
 
     t514_content = (
-        r"Design Resistance, $Q_u$ & \tablesmallfont\tallcell{\makecell{$Q_u=\min(Q_{u,s},\,Q_{u,c})$\\[6pt]$Q_{u,s}=\dfrac{0.8\,f_u\,(\pi d^2/4)}{\gamma_v}$\\[8pt]$Q_{u,c}=\dfrac{0.29\,\alpha\,d^2\sqrt{f_{ck}\,E_{cm}}}{\gamma_v}$}} & "
+        r"Design Resistance, $Q_u$ & \tablesmallfont\tallcell{\makecell{$Q_u=\min(Q_{u,s},\,Q_{u,c})$\\[\rowpad]$Q_{u,s}=\dfrac{0.8\,f_u\,(\pi d^2/4)}{\gamma_v}$\\[\rowpadwide]$Q_{u,c}=\dfrac{0.29\,\alpha\,d^2\sqrt{f_{ck}\,E_{cm}}}{\gamma_v}$}} & "
         + _kn(_dr_sc.get(KEY_SD_SC_Qu_kN)) + r""" & IRC 22 Cl. 606.3.1 (Eq. 6.1) \\[\rowpad]
 \hline
 Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
