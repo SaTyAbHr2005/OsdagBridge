@@ -35,6 +35,11 @@ def _parse_args():
     parser.add_argument("--main-input", metavar="KEY=VALUE", action="append", default=[],
                         help="set a main-page field before Design, e.g. geometry.footpath=Both Sides "
                              "or geometry.skew_angle=10; may be repeated")
+    parser.add_argument("--pre-input", metavar="KEY=JSON", action="append", default=[],
+                        help="set an input the design reads (an Additional Inputs value such as the "
+                             "end diaphragm type) before Design; may be repeated")
+    parser.add_argument("--skip-section", metavar="KEY", action="append", default=[],
+                        help="untick a chapter in the report options, e.g. quantities; may be repeated")
     parser.add_argument("--set-input", metavar="KEY=JSON", action="append", default=[],
                         help="change a backend input after Design and before the report, e.g. a "
                              "Loading tab selection that only the report reads; may be repeated")
@@ -44,16 +49,17 @@ def _parse_args():
 def main():
     args = _parse_args()
     out_pdf = os.path.abspath(args.output)
-    overrides = {}
-    for item in args.set_input:
-        key, _, value = item.partition("=")
-        overrides[key] = json.loads(value)
+    def _json_pairs(items):
+        return {key: json.loads(value) for key, _, value in (item.partition("=") for item in items)}
+
+    overrides = _json_pairs(args.set_input)
+    pre_inputs = _json_pairs(args.pre_input)
 
     sys.path.insert(0, os.path.abspath(SRC_DIR))
     # Importing the app's entry module runs its DLL and database setup without starting it.
     import osdagbridge.desktop.__main__ as app_main
-    from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import QApplication, QComboBox, QDialog, QLineEdit
+    from PySide6.QtCore import Qt, QTimer
+    from PySide6.QtWidgets import QApplication, QComboBox, QDialog, QLabel, QLineEdit
     from osdagbridge.desktop.ui.dialogs import custom_messagebox, project_location, report_options
 
     if args.keep_build:
@@ -100,7 +106,12 @@ def main():
     def fill_report_form(self):
         self.project_name.setText("OsdagBridge Sample")
         self.designer.setText("OsdagBridge")
+        for i in range(self.tree.topLevelItemCount()):
+            item = self.tree.topLevelItem(i)
+            if item.data(0, Qt.UserRole) in args.skip_section:
+                item.setCheckState(0, Qt.Unchecked)
         self.request = self.build_request(out_pdf, preview=args.preview)
+        print(f"[sample-report] report sections: {self.request.options.sections}")
         self.is_preview = False          # do not open the PDF viewer
         return QDialog.DialogCode.Accepted
 
@@ -116,6 +127,14 @@ def main():
     state = {"phase": "design", "t0": time.time()}
 
     def tick():
+        # A dialog the script does not fill in would block an unattended run:
+        # report what it says and close it.
+        modal = QApplication.activeModalWidget()
+        if modal is not None:
+            texts = [label.text() for label in modal.findChildren(QLabel) if label.text().strip()]
+            print(f"[sample-report] closed dialog {type(modal).__name__} {modal.windowTitle()!r}: {texts}")
+            modal.close()
+            return
         if time.time() - state["t0"] > TIMEOUT_S:
             print("[sample-report] timed out")
             app.exit(2)
@@ -127,7 +146,13 @@ def main():
             for key, value in fields:
                 widget = dock._w(key)
                 if isinstance(widget, QComboBox):
-                    widget.setCurrentText(value)
+                    index = widget.findText(value)
+                    if index < 0:
+                        options = [widget.itemText(i) for i in range(widget.count())]
+                        print(f"[sample-report] {value!r} is not an option of {key}: {options}")
+                        app.exit(1)
+                        return
+                    widget.setCurrentIndex(index)
                 elif isinstance(widget, QLineEdit):
                     widget.setText(value)
                     widget.editingFinished.emit()
@@ -136,6 +161,8 @@ def main():
                     app.exit(1)
                     return
                 print(f"[sample-report] {key} = {window.input_dict.get(key)}")
+            # Design hands window.input_dict to the backend, so inputs set here are designed with.
+            window.input_dict.update(pre_inputs)
             print("[sample-report] running Design")
             state["phase"] = "designing"
             window.common_design_func("Design")
@@ -144,6 +171,10 @@ def main():
                 print("[sample-report] Design did not finish; see the messages above")
                 app.exit(1)
                 return
+            for key, value in pre_inputs.items():
+                used = window.backend.input_dict.get(key)
+                note = "" if used == value else f"  (requested {value!r})"
+                print(f"[sample-report] design used {key} = {used!r}{note}")
             # The report reads the backend's own copy of the inputs.
             window.backend.input_dict.update(overrides)
             print("[sample-report] generating the report")
