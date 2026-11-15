@@ -1,15 +1,15 @@
 # OsdagBridge design report: technical changes
 
-Branch `report-enhancements`: 82 commits of code and tests on top of `upstream/dev`, plus this document.
+Branch `report-enhancements`: 88 commits of code and tests on top of `upstream/dev`, plus this document.
 `Report_Before.pdf` and `Report_After.pdf` in this folder were built from the same inputs (span 30 m, carriageway 7.5 m, Mumbai (Colaba), all other inputs at their defaults) with the same script, so every difference between them comes from the code changes below.
 
 | | Before | After |
 |---|---|---|
-| Pages | 56 | 62 |
+| Pages | 56 | 63 |
 | Long tables that repeat their header on a new page | 2 of 49 | 51 of 51 |
 | Rows running into the footer | page 30 (G4 stiffener row) | none |
 | Charts | none | 5 (3 utilization, 2 material) |
-| Automated tests for the report | none | 38 |
+| Automated tests for the report | none | 39 |
 
 The extra pages come from the new List of Figures and List of Tables, the charts, the end diaphragm rows, the design log chapter and Table 5.1, which now gives each girder its own page instead of breaking a girder's rows across two.
 
@@ -35,7 +35,7 @@ The extra pages come from the new List of Figures and List of Tables, the charts
 python tools/build_sample_report.py sample.pdf --keep-build build/
 ```
 
-The script opens the application, enters the main inputs, runs Design and then Generate Report, so the PDF goes through the same code as a user's report. `--keep-build` keeps the `.tex`, `.log` and chart images; `--preview` builds a watermarked preview; `--set-input KEY=JSON` changes an input that only the report reads (used to check that the live load tables follow the Loading tab).
+The script opens the application, enters the main inputs, runs Design and then Generate Report, so the PDF goes through the same code as a user's report. `--keep-build` keeps the `.tex`, `.log` and chart images; `--preview` builds a watermarked preview; `--main-input KEY=VALUE` sets a main-page field before Design (footpath, median, skew, material grades); `--set-input KEY=JSON` changes an input that only the report reads (used to check that the live load tables follow the Loading tab).
 
 ```bash
 python -m pytest tests
@@ -86,7 +86,7 @@ The Footpath Live Load table gives whether a footpath exists, its width, the pre
 
 ## Item 4: utilization ratio charts in Section 5.5
 
-The rows of the Overall Design Check Summary are now `SummaryRow` records with a numeric UR, and the table and the charts are both drawn from that list, so they cannot disagree. `charts.py` draws one horizontal bar chart per element group (plate girders, deck slab, cross bracing, end diaphragms) with a red dashed line at UR = 1.0. Failing bars are red, hatched and labelled FAIL, so they still read in greyscale print and for colour-blind readers. A group with no UR (rolled or welded end diaphragms have no design check yet) gets one sentence instead of an empty chart.
+The rows of the Overall Design Check Summary are now `SummaryRow` records with a numeric UR, and the table and the charts are both drawn from that list, so they cannot disagree. `charts.py` draws one column chart per element group (plate girders, deck slab, cross bracing, end diaphragms), with the utilization ratio on the y-axis and a red dashed horizontal line at UR = 1.0. Failing bars are red, hatched and labelled FAIL, so they still read in greyscale print and for colour-blind readers. A group with no UR (rolled or welded end diaphragms have no design check yet) gets one sentence instead of an empty chart.
 
 The bundled TeX has no pgfplots, so the charts are matplotlib PNGs. They are drawn with matplotlib's object interface (`Figure`), which can run on the report thread while the Qt window is open; pyplot keeps global state and is not safe there.
 
@@ -124,6 +124,19 @@ The six section previews in Chapter 6 are 300 × 300 px widget captures with the
 
 A square root or stacked fraction is taller than a line of text, so it pushed against the rule above its row. `\tallcell{}` adds a 3 pt gap above such a cell only; ordinary rows keep their height.
 
+### Checked with other inputs
+
+To find values written into the report code, reports were also built for other locations and settings with `tools/build_sample_report.py`:
+
+| Location | Span, carriageway | Other inputs |
+|---|---|---|
+| Ahmedabad, Gujarat | 40 m, 11 m (3 lanes, 5 girders) | footpaths on both sides, 10° skew |
+| Dhubri, Assam (seismic zone V) | 25 m, 7.5 m | footpath on one side |
+| Chennai, Tamil Nadu | 35 m, 9 m | median; 70R wheeled, 70R bogie and fatigue vehicles unticked; no Class SV braking; braking eccentricity 1.5 m |
+| Bagalkote, Karnataka | 30 m, 7.5 m | M35 deck concrete |
+
+All four compiled without LaTeX errors. Location values (seismic zone and zone factor, wind speed, shade temperatures), lane count, girder count, footpath and median rows, the vehicle table and the impact factors all followed the inputs. The runs found three things, now fixed: the bill of materials printed "M40" and "Fe 500" whatever grades were chosen, computed widths printed as 15.649999999999999, and chart labels such as "Compression" were split mid-word.
+
 ### Smaller fixes
 
 - The vehicle load note broke across a page right after "Impact factor = 1 +". It is now kept in one piece, and "1 + IM" cannot be split.
@@ -139,12 +152,11 @@ A square root or stacked fraction is taller than a line of text, so it pushed ag
 | A1 | Report defects: stable Chapter 4 load case order, no "-0.000", computed wind Vz and Pz shown, wearing course load in kN/m², units in the summary, 0° skew shown when none is entered, stiffener sizes labelled "required" in Optimized mode, readable stiffener check names, no stray "\|" in the header, crash barrier volume | Each was wrong or blank in the old report |
 | A2 | Green PASS and bold red FAIL in every check table, UR above 1.0 highlighted everywhere | 65 of 80 PASS cells were plain text, and the old red was below the 4.5:1 text contrast minimum |
 | A3 | Critical Checks box on the first summary page: verdict, governing check, each failing check with its girders, highest UR and a link to its section | A reviewer sees the outcome without paging through the report |
-| A4 | Document control block (Rev, date, description, prepared, checked, approved) on the title page | Standard on issued design reports |
-| A5 | "PREVIEW --- NOT FOR CONSTRUCTION" watermark on reports from the Preview button | A printed preview cannot pass as an issued report |
-| A6 | List of Figures, List of Tables, numbered plot captions, PDF title/author/subject, bookmarks opened at chapter level | Navigation in a long document |
-| A7 | "Summary charts" item in the report options | Users can leave the charts out |
-| A8 | 38 tests: style module, table helper, charts, live load selection, end diaphragm quantities, executive summary, design log, LaTeX compilation | The report had no tests |
-| A9 | `tools/build_sample_report.py` | Reproducible sample reports for before/after comparisons |
+| A4 | "PREVIEW --- NOT FOR CONSTRUCTION" watermark on reports from the Preview button | A printed preview cannot pass as an issued report |
+| A5 | List of Figures, List of Tables, numbered plot captions, PDF title/author/subject, bookmarks opened at chapter level | Navigation in a long document |
+| A6 | "Summary charts" item in the report options | Users can leave the charts out |
+| A7 | 39 tests: style module, table helper, charts, live load selection, end diaphragm quantities, executive summary, design log, LaTeX compilation | The report had no tests |
+| A8 | `tools/build_sample_report.py` | Reproducible sample reports for before/after comparisons |
 
 Defects in existing code found and fixed on the way:
 
@@ -165,6 +177,8 @@ These are outside the report generator and are left for separate issues:
 4. The end diaphragm design finds no member force above its tolerance, so `end_diaphragm_design_results` is empty and no end diaphragm member checks are reported.
 5. `defaults.py` stores the crash barrier area in mm² while the Additional Inputs field and its compute function use m².
 6. `defaults.py` writes the girder depth in mm, while the bracing designs read the same key as metres.
+7. With a 10° skew (40 m span, 11 m carriageway, five girders) `get_results_dataset()` returned nothing, so the backend stored no load case summary and the per-girder fatigue and deflection results held only G1. Table 4.1 now says no grillage results are available instead of showing a row of dashes.
+8. Changing the Footpath dropdown raises `AttributeError` in `input_dock.py`: `CustomWindow` has no `notify_additional_inputs_footpath`.
 
 ## Known limits
 
@@ -181,12 +195,12 @@ These are outside the report generator and are left for separate issues:
 | `core/reports/tables.py` | new: long table opening, width fitting, grouped rows, page-break control |
 | `core/reports/charts.py` | new: utilization and quantity charts |
 | `core/reports/live_loads.py` | new: vehicle and footpath load rows |
-| `core/reports/report_generator.py` | preamble from the style module, watermark, PDF properties, document control, chapter selection |
+| `core/reports/report_generator.py` | preamble from the style module, watermark, PDF properties, chapter selection |
 | `core/reports/executive_summary.py` | Critical Checks box, readable check names, girder filter |
 | `core/reports/chap2.py` to `chap8.py` | tables through `longtable_begin`, style names, the fixes above |
 | `core/reports/report_utils.py` | numbered figure captions, `≤`/`≥` handling |
 | `core/boq/boq_generator.py` | end diaphragm rows, crash barrier area |
 | `core/utils/codes/irc6_2017.py` | optional `tracked` argument for Cl. 208.3 |
 | `desktop/ui/dialogs/report_options.py` | preview flag, summary charts item |
-| `tests/...` | 38 tests |
+| `tests/...` | 39 tests |
 | `tools/build_sample_report.py` | sample report script |
