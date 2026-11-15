@@ -97,6 +97,7 @@ class FigureStyle:
     summary_width: str = r"0.9\textwidth"      # executive summary views
     drawing_width: str = r"0.85\textwidth"     # single drawings (Chapter 6)
     grid_cell_width: str = r"0.31\textwidth"   # three drawings side by side
+    grid_image_height: str = "3.5cm"           # tallest a side-by-side drawing may be
     placeholder_width: str = r"0.97\textwidth"
     gap_before_drawing: str = "4pt"
     # Plots carry their own whitespace margin, so the gaps around them are

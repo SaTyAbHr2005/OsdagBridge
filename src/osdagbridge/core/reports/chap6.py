@@ -59,7 +59,8 @@ def ch6_drawings(fig_paths):
         label_tex = (r'\label{' + label + '}') if label else ''
         if path:
             p = path.replace('\\', '/')
-            body = r'\includegraphics[width=\linewidth]{' + p + '}'
+            body = (r'\includegraphics[width=\linewidth,height=' + FIGURE.grid_image_height
+                    + r',keepaspectratio]{' + p + '}')
         else:
             body = r'\fbox{\parbox{0.95\linewidth}{\centering\textit{[ ' + title + r' ]}}}'
         return (r'\begin{minipage}[t]{' + FIGURE.grid_cell_width + '}' + '\n'

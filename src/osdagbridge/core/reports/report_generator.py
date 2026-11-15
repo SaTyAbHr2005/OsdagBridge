@@ -823,6 +823,31 @@ _FIGURE_MAP = [
     ('defl_ll',               'defl_ll.png'),
 ]
 
+# Section previews grabbed from fixed-size widgets: the drawing fills a small
+# part of the capture, which leaves a wide gap between it and its caption.
+_TRIMMED_FIGURES = {'cb_bracing', 'cb_top_chord', 'cb_bottom_chord',
+                    'ed_bracing', 'ed_top_chord', 'ed_bottom_chord'}
+
+
+def _trim_margins(path, margin_px=10):
+    """Crop the plain background around the drawing in a PNG, keeping a small margin."""
+    try:
+        from PIL import Image, ImageChops
+        with Image.open(path) as img:
+            rgba = img.convert('RGBA')
+        # Flatten onto white so transparent areas do not turn black.
+        rgb = Image.new('RGB', rgba.size, 'white')
+        rgb.paste(rgba, mask=rgba.getchannel('A'))
+        background = Image.new('RGB', rgb.size, rgb.getpixel((0, 0)))
+        box = ImageChops.difference(rgb, background).getbbox()
+        if box:
+            left, top, right, bottom = box
+            rgb.crop((max(left - margin_px, 0), max(top - margin_px, 0),
+                      min(right + margin_px, rgb.width), min(bottom + margin_px, rgb.height))).save(path)
+    except Exception as exc:
+        logger.warning("Could not trim %s: %s", path, exc)
+
+
 def generate_report(payload, request):
     # type: (ReportPayload, ReportRequest) -> ReportResult
     """Compile the full OsdagBridge Design Report to PDF (+ .tex source)."""
@@ -863,6 +888,8 @@ def generate_report(payload, request):
                     p = os.path.join(tmp_images, attr + '.png')
                     with open(p, 'wb') as fh:
                         fh.write(img_bytes)
+                    if attr in _TRIMMED_FIGURES:
+                        _trim_margins(p)
                     fig_paths[attr] = p.replace('\\', '/')
             payload.figure_data.clear()  # bytes no longer needed — free RAM now
 
