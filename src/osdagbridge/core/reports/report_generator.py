@@ -434,9 +434,11 @@ class ReportDataBridge:
             return {}
 
     def get_cb_pairs(self) -> list:
-        """Return sorted list of girder pair keys e.g. ['G1-G2', 'G2-G3']."""
+        """Return girder pair keys in girder order, e.g. ['G1-G2', 'G2-G3', ..., 'G10-G11']."""
         try:
-            return sorted(self._cb_forces_dict().get("pairs", {}).keys())
+            # Numeric order: a plain string sort puts 'G10-G11' before 'G2-G3'.
+            return sorted(self._cb_forces_dict().get("pairs", {}).keys(),
+                          key=lambda pair: [int(n) for n in re.findall(r"\d+", pair)])
         except Exception:
             return []
 
