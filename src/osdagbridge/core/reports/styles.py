@@ -220,11 +220,15 @@ def latex_definitions() -> str:
 % Header row shading. PDF viewers snap fills to whole pixels, so a fill that
 % touches a 0.5pt rule hides it at screen zoom. The fill stops one rule width
 % short of the vertical rules, and \headtoprule draws the rule above the
-% header again over the fill (#1 = full table width).
+% header again over the fill from the first cell (#1 = full table width).
+% In a centred or ragged-left cell, the -1fil/+1fil pair cancels the line's
+% own stretch on the overlay's left, so it stays at the cell's left edge
+% while the text keeps its alignment.
 \newcommand{{\tableheader}}{{\rowcolor{{tableHeader}}[\dimexpr\tabcolsep-\arrayrulewidth\relax][\dimexpr\tabcolsep-\arrayrulewidth\relax]}}
 \makeatletter
 \newcommand{{\headtoprule}}[1]{{\leavevmode\rlap{{\hspace{{-\dimexpr\tabcolsep+\arrayrulewidth\relax}}%
   \smash{{\raisebox{{\ht\@arstrutbox}}{{\rule{{#1}}{{\arrayrulewidth}}}}}}}}}}
+\newcommand{{\headtoprulec}}[1]{{\leavevmode\hskip\z@\@plus-1fil\headtoprule{{#1}}\hskip\z@\@plus1fil\relax}}
 \makeatother
 \newcommand{{\statuspass}}[1]{{\textcolor{{statusPass}}{{#1}}}}
 \newcommand{{\statusfail}}[1]{{\textcolor{{statusFail}}{{\textbf{{#1}}}}}}

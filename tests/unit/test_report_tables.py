@@ -30,6 +30,8 @@ def test_shaded_header_redraws_its_top_rule_over_the_fill():
     # 2 columns: widths + 4 column gaps + 3 vertical rules, on both header copies.
     overlay = r"\tableheader\headtoprule{\dimexpr8.000cm+4\tabcolsep+3\arrayrulewidth\relax}"
     assert overlay in first and overlay in rest
+    # A centred first cell uses the variant that keeps the overlay at the cell edge.
+    assert r"\tableheader\headtoprulec{" in longtable_begin(r"|C{2cm}|L{3cm}|", HEADER)
     # Without a known width for every column there is no overlay.
     assert r"\headtoprule" not in longtable_begin(r"|l|L{3cm}|", HEADER)
 

@@ -21,6 +21,8 @@ _WIDTH = re.compile(r"([pmbLCR])\{([\d.]+)cm\}")
 # >{...}, <{...} and @{...} decorate a column without adding one.
 _DECORATION = re.compile(r"[<>@]\{(?:[^{}]|\{[^{}]*\})*\}")
 _COLUMN = re.compile(r"[pmbLCR]\{[^{}]*\}|[lcr]")
+# A sized column with its optional >{...} decoration: (decoration, type, width).
+_SIZED_COLUMN = re.compile(r"(>\{(?:[^{}]|\{[^{}]*\})*\})?([pmbLCR])\{([\d.]+)cm\}")
 
 
 def count_columns(spec: str) -> int:
@@ -68,17 +70,21 @@ def shade_header(spec: str, header: str) -> str:
     """Add the top-rule overlay to the first shaded row of ``header``.
 
     ``\\tableheader`` fills the row, and the fill can hide the rule above it at
-    screen zoom; ``\\headtoprule`` draws that rule again over the fill. It
-    needs the full table width, so it is added only when every column of
-    ``spec`` has a width in cm.
+    screen zoom; ``\\headtoprule`` draws that rule again over the fill from the
+    first cell. A centred or right-aligned first cell uses ``\\headtoprulec``,
+    which keeps the overlay at the cell's left edge. The overlay needs the
+    full table width, so it is added only when every column has a width in cm.
     """
-    widths = [float(w) for _, w in _WIDTH.findall(spec)]
+    columns = _SIZED_COLUMN.findall(spec)
     n_cols = count_columns(spec)
-    if not widths or len(widths) != n_cols or r"\tableheader" not in header:
+    if not columns or len(columns) != n_cols or r"\tableheader" not in header:
         return header
-    width = (rf"\dimexpr{sum(widths):.3f}cm+{2 * n_cols}\tabcolsep"
+    deco, kind, _ = columns[0]
+    left = kind == "L" or (kind == "p" and "centering" not in deco and "raggedleft" not in deco)
+    width = (rf"\dimexpr{sum(float(w) for _, _, w in columns):.3f}cm+{2 * n_cols}\tabcolsep"
              rf"+{spec.count('|')}\arrayrulewidth\relax")
-    return header.replace(r"\tableheader", r"\tableheader\headtoprule{" + width + "}", 1)
+    macro = r"\headtoprule" if left else r"\headtoprulec"
+    return header.replace(r"\tableheader", r"\tableheader" + macro + "{" + width + "}", 1)
 
 
 def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
