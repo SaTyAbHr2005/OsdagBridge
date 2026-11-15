@@ -3,7 +3,8 @@
 import re
 
 from osdagbridge.core.reports.styles import TABLE, length_cm, text_width_cm
-from osdagbridge.core.reports.tables import count_columns, fit_to_text_width, group_rows, longtable_begin
+from osdagbridge.core.reports.tables import (count_columns, fit_to_text_width, group_rows,
+                                             keep_rows_together, longtable_begin)
 
 HEADER = r"\tableheader \textbf{A} & \textbf{B} \\"
 
@@ -24,16 +25,26 @@ def test_header_and_caption_repeat_on_every_page():
     assert r"\endhead" in rest and r"\endfoot" in rest and r"\endlastfoot" in rest
 
 
-def test_shaded_header_redraws_its_top_rule_over_the_fill():
-    tex = longtable_begin(r"|L{5cm}|C{3cm}|", HEADER, caption="Loads")
-    first, rest = tex.split(r"\endfirsthead")
-    # 2 columns: widths + 4 column gaps + 3 vertical rules, on both header copies.
-    overlay = r"\tableheader\headtoprule{\dimexpr8.000cm+4\tabcolsep+3\arrayrulewidth\relax}"
-    assert overlay in first and overlay in rest
-    # A centred first cell uses the variant that keeps the overlay at the cell edge.
-    assert r"\tableheader\headtoprulec{" in longtable_begin(r"|C{2cm}|L{3cm}|", HEADER)
-    # Without a known width for every column there is no overlay.
-    assert r"\headtoprule" not in longtable_begin(r"|l|L{3cm}|", HEADER)
+def _table(n_rows):
+    rows = "".join(f"\\makecell{{a\\\\b}} & {i} \\\\\n\\hline\n" for i in range(n_rows))
+    return longtable_begin(r"|L{5cm}|L{5cm}|", HEADER) + rows + r"\end{longtable}"
+
+
+def test_short_table_is_kept_on_one_page():
+    tex = keep_rows_together(_table(4))
+    body = tex.split(r"\endlastfoot")[1]
+    # Every row but the last forbids a break, and so does the rule under it.
+    assert body.count("\\\\*\n\\hlinenobreak") == 3
+    # The last row stays breakable so the table is not tied to what follows.
+    assert body.rstrip().endswith("3 \\\\\n\\hline\n\\end{longtable}")
+    # The line break inside \makecell is not a row end.
+    assert body.count(r"\makecell{a\\b}") == 4
+
+
+def test_long_table_keeps_two_rows_on_each_side_of_a_break():
+    body = keep_rows_together(_table(10)).split(r"\endlastfoot")[1]
+    assert body.count(r"\hlinenobreak") == 2
+    assert "0 \\\\*" in body and "8 \\\\*" in body and "4 \\\\*" not in body
 
 
 def test_bare_p_columns_are_set_ragged_right():

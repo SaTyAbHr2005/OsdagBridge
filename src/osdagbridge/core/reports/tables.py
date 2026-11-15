@@ -21,8 +21,8 @@ _WIDTH = re.compile(r"([pmbLCR])\{([\d.]+)cm\}")
 # >{...}, <{...} and @{...} decorate a column without adding one.
 _DECORATION = re.compile(r"[<>@]\{(?:[^{}]|\{[^{}]*\})*\}")
 _COLUMN = re.compile(r"[pmbLCR]\{[^{}]*\}|[lcr]")
-# A sized column with its optional >{...} decoration: (decoration, type, width).
-_SIZED_COLUMN = re.compile(r"(>\{(?:[^{}]|\{[^{}]*\})*\})?([pmbLCR])\{([\d.]+)cm\}")
+# A full rule right after a row end, past an optional [gap] argument.
+_RULE_AFTER_ROW = re.compile(r"(?:\[[^\]]*\])?\s*(\\hline)(?![a-zA-Z])")
 
 
 def count_columns(spec: str) -> int:
@@ -66,25 +66,55 @@ def group_rows(label: str, rows: list[str], n_cols: int) -> str:
             + inner_rule.join(rows) + " \\\\[\\rowpad]\n\\hline")
 
 
-def shade_header(spec: str, header: str) -> str:
-    """Add the top-rule overlay to the first shaded row of ``header``.
+def _row_ends(body: str) -> list[int]:
+    """Positions of the row-ending ``\\\\`` in a table body, skipping any inside braces."""
+    ends, depth, i = [], 0, 0
+    while i < len(body):
+        c = body[i]
+        if c == "\\":
+            if body.startswith("\\\\", i) and depth == 0:
+                ends.append(i)
+            i += 2                      # also skips \{ and \}
+            continue
+        depth += (c == "{") - (c == "}")
+        i += 1
+    return ends
 
-    ``\\tableheader`` fills the row, and the fill can hide the rule above it at
-    screen zoom; ``\\headtoprule`` draws that rule again over the fill from the
-    first cell. A centred or right-aligned first cell uses ``\\headtoprulec``,
-    which keeps the overlay at the cell's left edge. The overlay needs the
-    full table width, so it is added only when every column has a width in cm.
+
+def keep_rows_together(tex: str) -> str:
+    """Stop longtables splitting badly across pages.
+
+    A table of up to ``TABLE.keep_whole_rows`` rows is never split: it moves
+    to the next page whole. A longer table is not broken after its first row
+    or before its last, so no page carries a single row of it. ``\\\\*`` is
+    longtable's row end that forbids a page break after the row.
     """
-    columns = _SIZED_COLUMN.findall(spec)
-    n_cols = count_columns(spec)
-    if not columns or len(columns) != n_cols or r"\tableheader" not in header:
-        return header
-    deco, kind, _ = columns[0]
-    left = kind == "L" or (kind == "p" and "centering" not in deco and "raggedleft" not in deco)
-    width = (rf"\dimexpr{sum(float(w) for _, _, w in columns):.3f}cm+{2 * n_cols}\tabcolsep"
-             rf"+{spec.count('|')}\arrayrulewidth\relax")
-    macro = r"\headtoprule" if left else r"\headtoprulec"
-    return header.replace(r"\tableheader", r"\tableheader" + macro + "{" + width + "}", 1)
+    out, pos = [], 0
+    for m in re.finditer(r"\\endlastfoot(.*?)\\end\{longtable\}", tex, re.S):
+        start = m.start(1)
+        body = m.group(1)
+        ends = _row_ends(body)
+        breakable = [e for e in ends if not body.startswith("\\\\*", e)]
+        # The last row end stays breakable, or the table would be tied to
+        # whatever follows it.
+        if len(ends) <= TABLE.keep_whole_rows:
+            locked = [e for e in breakable if e != ends[-1]]
+        else:
+            locked = [e for e in breakable if e in (ends[0], ends[-2])]
+        out.append(tex[pos:start])
+        last = 0
+        for e in locked:
+            out.append(body[last:e + 2] + "*")
+            last = e + 2
+            # A longtable \hline is itself a break point; use the variant without one.
+            rule = _RULE_AFTER_ROW.match(body, last)
+            if rule:
+                out.append(body[last:rule.start(1)] + r"\hlinenobreak")
+                last = rule.end()
+        out.append(body[last:])
+        pos = m.end(1)
+    out.append(tex[pos:])
+    return "".join(out)
 
 
 def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
@@ -101,7 +131,7 @@ def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
     # A bare p{} column justifies its text, which leaves wide gaps in narrow
     # cells; set it ragged right like the L columns.
     spec = fit_to_text_width(re.sub(r"(?<=\|)p\{", "L{", spec), col_sep)
-    head = "\\hline\n" + shade_header(spec, header.strip()) + "\n\\hline\n"
+    head = "\\hline\n" + header.strip() + "\n\\hline\n"
 
     if caption:
         # The optional argument keeps the List of Tables entry in plain type.

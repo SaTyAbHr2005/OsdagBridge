@@ -75,6 +75,9 @@ class TableStyle:
     # before them adds a break point that can separate the table from its
     # first page and strand the "Continued" foot.
     min_lines_before_table: int = 5
+    # A table with this many rows or fewer moves to the next page whole
+    # instead of splitting.
+    keep_whole_rows: int = 6
     # Labels on tables that break across pages.
     continued_caption: str = "(continued)"
     continued_note: str = r"\small\itshape Continued on next page"
@@ -220,18 +223,38 @@ def latex_definitions() -> str:
 \definecolor{{logWarning}}{{HTML}}{{{c.log_warning}}}
 \definecolor{{logError}}{{HTML}}{{{c.log_error}}}
 \definecolor{{tableHeader}}{{HTML}}{{{c.table_header}}}
-% Header row shading. PDF viewers snap fills to whole pixels, so a fill that
-% touches a 0.5pt rule hides it at screen zoom. The fill stops one rule width
-% short of the vertical rules, and \headtoprule draws the rule above the
-% header again over the fill from the first cell (#1 = full table width).
-% In a centred or ragged-left cell, the -1fil/+1fil pair cancels the line's
-% own stretch on the overlay's left, so it stays at the cell's left edge
-% while the text keeps its alignment.
-\newcommand{{\tableheader}}{{\rowcolor{{tableHeader}}[\dimexpr\tabcolsep-\arrayrulewidth\relax][\dimexpr\tabcolsep-\arrayrulewidth\relax]}}
+% Header row shading. colortbl paints a cell's fill after the rules above and
+% to the left of it, and PDF viewers round fills out to whole screen pixels,
+% so a fill that touches a rule paints over part of it and the rule looks
+% thinner than the others at screen zoom. The fill therefore stops one rule
+% width short of the vertical rules and, in the first header row, of the rule
+% above. Every rule is drawn once and nothing is painted over it.
+% \tableheadernext shades a second header row; it fills to the top so a cell
+% that spans both rows (\multirow) stays one colour.
+\colorlet{{tableHeaderTop}}{{tableHeader}}
 \makeatletter
-\newcommand{{\headtoprule}}[1]{{\leavevmode\rlap{{\hspace{{-\dimexpr\tabcolsep+\arrayrulewidth\relax}}%
-  \smash{{\raisebox{{\ht\@arstrutbox}}{{\rule{{#1}}{{\arrayrulewidth}}}}}}}}}}
-\newcommand{{\headtoprulec}}[1]{{\leavevmode\hskip\z@\@plus-1fil\headtoprule{{#1}}\hskip\z@\@plus1fil\relax}}
+% colortbl stores the row colour as \CT@color{{name}} followed by the
+% overhang widths; #2 is the colour name.
+\def\osdag@toprowheight#1#2#3\@nil{{%
+  \ifnum\pdfstrcmp{{#2}}{{tableHeaderTop}}=\z@\@height\dimexpr\ht\@arstrutbox-\arrayrulewidth\relax\fi}}
+\patchcmd{{\CT@@do@color}}{{\leaders\vrule}}
+  {{\leaders\vrule\ifx\CT@row@color\relax\else\expandafter\osdag@toprowheight\CT@row@color\@nil\fi}}
+  {{}}{{\PackageWarning{{osdagbridge}}{{Header fill could not be patched}}}}
+\makeatother
+\newcommand{{\tableheader}}{{\rowcolor{{tableHeaderTop}}[\dimexpr\tabcolsep-\arrayrulewidth\relax][\dimexpr\tabcolsep-\arrayrulewidth\relax]}}
+\newcommand{{\tableheadernext}}{{\rowcolor{{tableHeader}}[\dimexpr\tabcolsep-\arrayrulewidth\relax][\dimexpr\tabcolsep-\arrayrulewidth\relax]}}
+% longtable draws every \hline twice, one copy on each side of a page-break
+% point. The overlapping copies render darker than the vertical rules and
+% \cline at screen zoom. Draw the rule once with the break point after it;
+% \hlinenobreak, used after a row ending in \\*, leaves the break point out.
+\makeatletter
+\def\osdag@LTbreak@default{{\penalty-\@lowpenalty}}
+\let\osdag@LTbreak\osdag@LTbreak@default
+\def\osdag@LTnobreak{{\penalty\@M}}
+\newcommand{{\hlinenobreak}}{{\noalign{{\global\let\osdag@LTbreak\osdag@LTnobreak}}\hline}}
+\AtBeginDocument{{\def\LT@@hline{{\ifnum0=`{{\fi}}%
+  \multispan\LT@cols{{\CT@arc@\leaders\hrule\@height\arrayrulewidth\hfill}}\cr
+  \noalign{{\osdag@LTbreak\global\let\osdag@LTbreak\osdag@LTbreak@default}}}}}}
 \makeatother
 \newcommand{{\statuspass}}[1]{{\textcolor{{statusPass}}{{#1}}}}
 \newcommand{{\statusfail}}[1]{{\textcolor{{statusFail}}{{\textbf{{#1}}}}}}

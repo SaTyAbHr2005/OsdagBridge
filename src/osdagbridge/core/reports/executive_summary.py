@@ -4,7 +4,7 @@
 
 from osdagbridge.core.reports.report_utils import _fig_or_placeholder, _render_value, _tex, get_girder_entries
 from osdagbridge.core.reports.styles import TYPOGRAPHY, main_matter
-from osdagbridge.core.reports.tables import shade_header
+from osdagbridge.core.reports.tables import fit_to_text_width
 from osdagbridge.core.utils.common import (
     KEY_CARRIAGEWAY_WIDTH,
     KEY_SD_SECTION_DESIGNATION,
@@ -66,8 +66,8 @@ def _critical_checks_box(failures, governing) -> str:
             + r" & Section~\ref{" + section + r"} \\ \hline"
             for check, members, ur, section in failures)
         spec = r"|L{6.2cm}|C{3.2cm}|C{1.6cm}|C{2.6cm}|"
-        header = shade_header(spec, r"\tableheader \textbf{Failing Check} & \textbf{Members} & \textbf{Max UR}"
-                                    r" & \textbf{Details} \\")
+        header = (r"\tableheader \textbf{Failing Check} & \textbf{Members} & \textbf{Max UR}"
+                  r" & \textbf{Details} \\")
         lines.append(r"\begin{tabular}{" + spec + "}\n" r"\hline " + header + r" \hline" "\n"
                      + rows + "\n" r"\end{tabular}\\[3pt]")
     else:
@@ -262,11 +262,12 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
     label_col_cm = 2.8
     # Available width ≈ 15.0cm for A4 with 1in margins; each girder col gets equal share
     girder_col_cm = round(max(1.5, (15.0 - label_col_cm) / n_cols), 1)
-    col_spec = '|C{' + str(label_col_cm) + 'cm}|' + '|'.join(['C{' + str(girder_col_cm) + 'cm}'] * n_cols) + '|'
+    col_spec = fit_to_text_width(
+        '|C{' + str(label_col_cm) + 'cm}|' + '|'.join(['C{' + str(girder_col_cm) + 'cm}'] * n_cols) + '|')
 
     # Header row
     hdr_cells = ' &\n  '.join([r'\textbf{' + _tex(lbl) + '}' for lbl, _ in labels])
-    header_row = shade_header(col_spec, r'  \tableheader \textbf{} &' + '\n  ' + hdr_cells + r' \\') + '\n'
+    header_row = r'  \tableheader \textbf{} &' + '\n  ' + hdr_cells + r' \\' + '\n'
 
     # Member ID row
     mid_cells = ' & '.join([_tex(mid) for _, mid in labels])

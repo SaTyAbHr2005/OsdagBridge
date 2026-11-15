@@ -95,7 +95,7 @@ def _vehicle_live_load_table(input_dict) -> str:
     # under columns 4-6 and in the header colour elsewhere.
     header = r"""\tableheader & & & \multicolumn{3}{c|}{\textbf{Braking Load (IRC 6 Cl. 211)}} & \\
 \hhline{|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|-|-|-|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|}
-\tableheader \multirow{-2}{*}{\textbf{Vehicle}}
+\tableheadernext \multirow{-2}{*}{\textbf{Vehicle}}
 & \multirow{-2}{*}{\makecell{\textbf{Total Load}\\\textbf{(kN)}}}
 & \multirow{-2}{*}{\makecell{\textbf{Impact}\\\textbf{Factor}}}
 & \textbf{Considered?}

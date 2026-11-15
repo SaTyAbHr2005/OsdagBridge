@@ -127,7 +127,7 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 % hhline draws the rule in its own row and keeps column 1 shaded.
 \hhline{|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|-|-|-|-|-|-|-|-|}
 
-\tableheader \multirow{-2}{*}{\makecell{\textbf{Load Case /}\\\textbf{Combination}}}
+\tableheadernext \multirow{-2}{*}{\makecell{\textbf{Load Case /}\\\textbf{Combination}}}
 & \makecell{\textbf{Max}\\\textbf{(kNm)}}
 & \textbf{Girder}
 & \makecell{\textbf{Loc.}\\\textbf{(m)}}
