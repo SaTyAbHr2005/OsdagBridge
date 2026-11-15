@@ -89,9 +89,8 @@ IS 2062 & 2011 & Structural steel - yield and ultimate strength by grade \\
 \end{longtable}
 \endgroup
 
-\clearpage
 \section{Analysis and Design Assumptions of This Version}
-\label{sec:assumptions}
+\label{sec:design-assumptions}
 
 \textbf{Structural Analysis}
 

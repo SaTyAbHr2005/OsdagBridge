@@ -1353,7 +1353,6 @@ Punching Shear Check & $v_{Ed} \leq v_{Rd,c}$ & """ + (f"{_dkv(KEY_DD_PUNCH_VED)
 \noindent\textit{Note: Punching shear reinforcement not typically required for deck slabs with $d \geq 200$ mm and adequate longitudinal reinforcement.}
 
 \vspace{\tablegap}
-\clearpage
 """ + longtable_begin(r"""|L{7cm}|>{\arraybackslash}p{8.5cm}|""", r"""\tableheader \textbf{Parameter} & \textbf{Value / Reference} \\[\rowpad]""", caption=r"""Crack Width Check (Deck Slab)""") + r"""
 \textnormal{Min. Reinforcement for Crack Control, $A_{s,min}$} & """ + _dkf(KEY_DD_AS_MIN, nd=0) + r""" mm²/m [IRC 112 Cl. 16.5.1] \\[\rowpad]
 \hline

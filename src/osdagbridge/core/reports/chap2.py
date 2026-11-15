@@ -148,7 +148,6 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \hline
 \end{longtable}
 
-\newpage
 \section{Additional Inputs}
 \label{sec:additional-inputs}
 
@@ -290,8 +289,7 @@ def _girder_tables(input_dict, n_girders):
     rst_rows = "".join([_rst_row(g_lbl, i) for g_lbl, _, i in entries_for_table])
 
     return (r"""
-\newpage
-
+\vspace{\tablegap}
 """ + longtable_begin(r"""|L{2.2cm}|L{1.8cm}|p{3.8cm}|p{3.8cm}|p{3.8cm}|""", r"""\tableheader \textbf{Girder} & \textbf{Member ID} & \textbf{Design Mode} & \textbf{Girder Type} & \textbf{Girder Symmetry} \\[\rowpad]""", caption=r"""Girder General Information""") + r"""
 """
             + gen_rows
@@ -351,8 +349,7 @@ def _bracing_tables(input_dict, n_girders):
     ed_rows = "".join([_ed_row(ed_loc, ed_ids, i) for _, _, ed_loc, ed_ids, i in panels])
 
     return (r"""
-\newpage
-
+\vspace{\tablegap}
 """ + longtable_begin(r"""|L{2.6cm}|L{3.0cm}|L{3.4cm}|L{3.4cm}|C{2.2cm}|""", r"""\tableheader \textbf{Location} & \textbf{Member IDs} & \textbf{Type of Bracing} & \textbf{Bracing Section} & \textbf{Spacing (m)} \\""", caption=r"""Member Properties: Cross Bracing Details""") + r"""
 """
 + cb_rows
