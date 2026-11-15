@@ -32,6 +32,9 @@ def _parse_args():
     parser.add_argument("--preview", action="store_true", help="build as the Preview PDF button does")
     parser.add_argument("--keep-build", metavar="DIR",
                         help="keep the LaTeX build (.tex, .log, images) in DIR")
+    parser.add_argument("--main-input", metavar="KEY=VALUE", action="append", default=[],
+                        help="set a main-page field before Design, e.g. geometry.footpath=Both Sides "
+                             "or geometry.skew_angle=10; may be repeated")
     parser.add_argument("--set-input", metavar="KEY=JSON", action="append", default=[],
                         help="change a backend input after Design and before the report, e.g. a "
                              "Loading tab selection that only the report reads; may be repeated")
@@ -50,7 +53,7 @@ def main():
     # Importing the app's entry module runs its DLL and database setup without starting it.
     import osdagbridge.desktop.__main__ as app_main
     from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import QApplication, QDialog
+    from PySide6.QtWidgets import QApplication, QComboBox, QDialog, QLineEdit
     from osdagbridge.desktop.ui.dialogs import custom_messagebox, project_location, report_options
 
     if args.keep_build:
@@ -87,6 +90,8 @@ def main():
         pick = next((o for o in options if args.district.lower() in o.lower()),
                     next((o for o in options if not o.lower().startswith("select")), ""))
         self.district_combo.setCurrentText(pick)
+        if args.district.lower() not in pick.lower():
+            print(f"[sample-report] district {args.district!r} not found in {args.state}; using {pick!r}")
         self.validate_and_save()
         return self.result()
 
@@ -117,10 +122,20 @@ def main():
         elif state["phase"] == "design":
             dock = window.input_dock
             dock.show_project_location_dialog()
-            for key, value in (("geometry.span", args.span), ("geometry.carriageway_width", args.carriageway)):
+            fields = [("geometry.span", args.span), ("geometry.carriageway_width", args.carriageway)]
+            fields += [item.split("=", 1) for item in args.main_input]
+            for key, value in fields:
                 widget = dock._w(key)
-                widget.setText(value)
-                widget.editingFinished.emit()
+                if isinstance(widget, QComboBox):
+                    widget.setCurrentText(value)
+                elif isinstance(widget, QLineEdit):
+                    widget.setText(value)
+                    widget.editingFinished.emit()
+                else:
+                    print(f"[sample-report] no main-page field {key!r}")
+                    app.exit(1)
+                    return
+                print(f"[sample-report] {key} = {window.input_dict.get(key)}")
             print("[sample-report] running Design")
             state["phase"] = "designing"
             window.common_design_func("Design")
