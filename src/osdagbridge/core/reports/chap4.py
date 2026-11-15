@@ -71,7 +71,7 @@ def ch4_analysis(asum, fig_paths, bridge: "ReportDataBridge", span_m: float):
     merged_body = ("\n\\hline\n").join(
         _merged_row(lc, lc_summary.get(lc), rxn_summary.get(lc))
         for lc in all_lcs
-    ) if all_lcs else r"--- & --- & --- & --- & --- & --- & --- & --- & --- \\[\rowpad]"
+    ) if all_lcs else r"\multicolumn{9}{|c|}{\textit{No grillage results are available for this run.}} \\[\rowpad]"
 
     _span_m         = float(bridge.input_dict.get(KEY_SPAN, 0) or 0)
     _allow_live_mm  = _span_m * 1000.0 / 800.0
