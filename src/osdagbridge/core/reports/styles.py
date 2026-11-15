@@ -23,10 +23,10 @@ class PageStyle:
     # Tall enough for the running header and its rule; fancyhdr warns and
     # shifts the header on every page when it is smaller.
     head_height: str = "18pt"
-    # Distance from the last text line to the footer baseline. The footer
-    # rule sits just above the footer text (see page_styles), so it stays
-    # well clear of a table ending at the bottom of the page.
-    foot_skip: str = "30pt"
+    # Distance from the last text line to the footer baseline. It leaves room
+    # for the software-default note above the footer rule (see page_styles)
+    # while keeping both clear of a table ending at the bottom of the page.
+    foot_skip: str = "42pt"
     line_stretch: float = 1.15
 
 
@@ -157,7 +157,7 @@ class TitlePageStyle:
 @dataclass(frozen=True)
 class HeaderFooterStyle:
     footer_left: str = r"Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay"
-    page_label: str = r"Page \thepage\ of \pageref{LastPage}"
+    page_label: str = r"Page \thepage\osdagpagetotal"
     rule_thickness: str = "1pt"
     default_value_note: str = r"* Software default value"
 
@@ -311,6 +311,16 @@ def heading_formats() -> str:
 \renewcommand{{\contentsname}}{{\centering{ty.toc_title} Table of Contents}}"""
 
 
+def front_matter() -> str:
+    """Roman page numbers without a total for the contents and lists."""
+    return r"\pagenumbering{roman}\renewcommand{\osdagpagetotal}{}"
+
+
+def main_matter() -> str:
+    """Arabic page numbers from 1, with "of N" counting these pages only."""
+    return r"\pagenumbering{arabic}\renewcommand{\osdagpagetotal}{\ of \pageref{LastPage}}"
+
+
 def _rule() -> str:
     return rf"\color{{osdagGreen}}\hrule width \headwidth height {HEADER_FOOTER.rule_thickness}"
 
@@ -322,18 +332,25 @@ def page_styles(header_left: str, header_right: str) -> str:
     """
     hf = HEADER_FOOTER
     # On pages that print a software default value (flagged by \markSD in the
-    # preamble) the explanatory note hangs below the footer line, so it can
-    # never collide with text or a table at the bottom of the page.
-    footer = rf"""  \fancyfoot[L]{{{hf.footer_left}\ifbool{{hasSDonPage}}{{\\[-2pt]%
-    \textcolor{{black}}{{\footnotesize\itshape {hf.default_value_note}}}}}{{}}}}
+    # preamble) the explanatory note sits just above the footer rule, right
+    # aligned; foot_skip leaves room for it below the text block.
+    rule = rf"""\renewcommand{{\footrule}}{{\vspace{{-8pt}}\ifbool{{hasSDonPage}}{{\hbox to\headwidth{{\hfill
+    \footnotesize\itshape\color{{gray}}{hf.default_value_note}}}\vspace{{2pt}}}}{{}}{_rule()}}}"""
+    footer = rf"""  \fancyfoot[L]{{{hf.footer_left}}}
   \fancyfoot[R]{{{hf.page_label}}}
-  \renewcommand{{\footrule}}{{\vspace{{-8pt}}{_rule()}}}"""
+  {rule}"""
+    # The title page carries no page number.
+    title_footer = rf"""  \fancyfoot[L]{{{hf.footer_left}}}
+  {rule}"""
     body = rf"""  \fancyhf{{}}
   \fancyhead[L]{{{header_left}}}
   \fancyhead[R]{{{header_right}}}
 {footer}
   \renewcommand{{\headrule}}{{{_rule()} \vspace{{2pt}}}}"""
-    return rf"""\fancypagestyle{{main}}{{
+    # Front matter pages show "Page iii"; main_matter() adds "of N" from the
+    # Executive Summary on, where N is the last arabic page.
+    return rf"""\newcommand{{\osdagpagetotal}}{{\ of \pageref{{LastPage}}}}
+\fancypagestyle{{main}}{{
 {body}
 }}
 \fancypagestyle{{plain}}{{
@@ -342,7 +359,7 @@ def page_styles(header_left: str, header_right: str) -> str:
 \fancypagestyle{{firstpage}}{{
   \fancyhf{{}}
   \renewcommand{{\headrulewidth}}{{0pt}}
-{footer}
+{title_footer}
 }}
 \pagestyle{{main}}
 \setstretch{{{PAGE.line_stretch}}}"""

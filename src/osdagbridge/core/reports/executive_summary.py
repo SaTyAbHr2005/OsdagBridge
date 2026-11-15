@@ -3,7 +3,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 from osdagbridge.core.reports.report_utils import _fig_or_placeholder, _render_value, _tex, get_girder_entries
-from osdagbridge.core.reports.styles import TYPOGRAPHY
+from osdagbridge.core.reports.styles import TYPOGRAPHY, main_matter
 from osdagbridge.core.reports.tables import shade_header
 from osdagbridge.core.utils.common import (
     KEY_CARRIAGEWAY_WIDTH,
@@ -281,6 +281,7 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
 
     return r"""
 \newpage
+""" + main_matter() + r"""
 {\centering""" + TYPOGRAPHY.chapter_title + r""" Executive Summary\par}
 \addcontentsline{toc}{chapter}{Executive Summary}
 \vspace{\tablegap}

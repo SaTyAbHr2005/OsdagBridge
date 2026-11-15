@@ -269,7 +269,10 @@ def title_page(m, osdag_logo, org_logo):
 \\[""" + tp.logo_gap + r"""]
 """
 
+    # The title page is numbered "A" (never shown) so its PDF anchor does not
+    # clash with page 1 of the main matter.
     return r"""
+\pagenumbering{Alph}
 \begin{titlepage}
 \thispagestyle{firstpage}
 \centering
@@ -329,6 +332,7 @@ def _document_control(m) -> str:
 def toc_section():
     return r"""
 \newpage
+""" + styles.front_matter() + r"""
 \tableofcontents
 \newpage
 \listoffigures
@@ -945,8 +949,9 @@ def generate_report(payload, request):
             with open(tmp_tex, 'w', encoding='utf-8') as f:
                 f.write(full_tex)
 
-            # Compile twice for TOC and references
-            for _ in range(2):
+            # Three passes: the contents and lists appear on the second pass and
+            # add pages, so the page total and references settle on the third.
+            for _ in range(3):
                 try:
                     kwargs = {
                         'cwd': tmp_dir,
