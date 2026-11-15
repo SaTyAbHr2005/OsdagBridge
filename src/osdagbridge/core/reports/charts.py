@@ -5,6 +5,7 @@ charts are drawn with matplotlib's object API (no pyplot), which is safe
 to call from the report thread while the Qt GUI is running.
 """
 
+import textwrap
 from typing import Optional, Sequence
 
 from matplotlib.figure import Figure
@@ -19,27 +20,24 @@ def _colour(hex_value: str) -> str:
 
 
 def ur_bar_chart(items: Sequence[tuple[str, float]], path: str) -> Optional[str]:
-    """Save a horizontal bar chart of (label, utilization ratio) pairs.
+    """Save a column chart of (label, utilization ratio) pairs, UR on the y-axis.
 
-    Bars run top to bottom in the order given. Bars above UR = 1.0 are drawn
-    in the fail colour, hatched and labelled FAIL; a dashed line marks the
-    limit. Returns ``path``, or None when there is nothing to plot.
+    Columns run left to right in the order given. Columns above UR = 1.0 are
+    drawn in the fail colour, hatched and labelled FAIL; a horizontal dashed
+    line marks the limit. Returns ``path``, or None when there is nothing to plot.
     """
     if not items:
         return None
-    labels = [label for label, _ in items]
+    # Wrap between words only; a single long word such as "Compression" stays whole.
+    labels = [textwrap.fill(label, CHART.label_wrap_chars, break_long_words=False) for label, _ in items]
     urs = [float(ur) for _, ur in items]
     failing = [ur > UR_LIMIT for ur in urs]
 
-    fig = Figure(
-        figsize=(CHART.width_in, CHART.frame_in + CHART.bar_row_in * len(urs)),
-        dpi=CHART.dpi,
-        layout="constrained",
-    )
+    fig = Figure(figsize=(CHART.width_in, CHART.column_height_in), dpi=CHART.dpi, layout="constrained")
     ax = fig.add_subplot()
-    rows = range(len(urs))
-    bars = ax.barh(
-        rows, urs, height=0.6,
+    cols = range(len(urs))
+    bars = ax.bar(
+        cols, urs, width=0.6,
         color=[_colour(CHART.fail_bar if fail else CHART.pass_bar) for fail in failing],
     )
     for bar, fail in zip(bars, failing):
@@ -49,24 +47,28 @@ def ur_bar_chart(items: Sequence[tuple[str, float]], path: str) -> Optional[str]
             bar.set_edgecolor("white")
             bar.set_linewidth(0)
 
-    # Room on the right for the value labels.
-    x_max = max(UR_LIMIT * 1.25, max(urs) * 1.3)
+    # Headroom above the tallest column for its value label.
+    y_max = max(UR_LIMIT * 1.25, max(urs) * 1.2)
     text = _colour(CHART.text)
-    for row, ur, fail in zip(rows, urs, failing):
+    for col, ur, fail in zip(cols, urs, failing):
         # White backing keeps a label readable where it crosses the limit line.
-        ax.text(ur + 0.012 * x_max, row, f"{ur:.2f}" + ("  FAIL" if fail else ""),
-                va="center", fontsize=CHART.font_size, color=text,
+        ax.text(col, ur + 0.02 * y_max, f"{ur:.2f}" + ("\nFAIL" if fail else ""),
+                ha="center", va="bottom", fontsize=CHART.font_size, color=text,
                 fontweight="bold" if fail else "normal", zorder=4,
                 bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0})
 
-    ax.axvline(UR_LIMIT, color=_colour(CHART.limit_line), linestyle="--", linewidth=1.2)
-    ax.annotate(f"UR = {UR_LIMIT:.1f}", xy=(UR_LIMIT, 1.0), xycoords=("data", "axes fraction"),
-                xytext=(3, 2), textcoords="offset points", va="bottom",
-                fontsize=CHART.font_size, color=_colour(CHART.limit_line))
+    ax.axhline(UR_LIMIT, color=_colour(CHART.limit_line), linestyle="--", linewidth=1.2)
+    # Label just past the right end of the line, clear of every column.
+    ax.annotate(f"UR = {UR_LIMIT:.1f}", xy=(1.0, UR_LIMIT), xycoords=("axes fraction", "data"),
+                xytext=(4, 0), textcoords="offset points", ha="left", va="center",
+                fontsize=CHART.font_size, color=_colour(CHART.limit_line), annotation_clip=False)
 
-    ax.set_yticks(list(rows), labels)
-    ax.set_xlim(0, x_max)
-    _style_axis(ax, "Utilization ratio")
+    ax.set_xticks(list(cols), labels)
+    ax.set_ylim(0, y_max)
+    ax.set_ylabel("Utilization ratio (UR)", fontsize=CHART.font_size, color=text)
+    ax.tick_params(labelsize=CHART.font_size, colors=text, length=0)
+    ax.yaxis.grid(True, color=_colour(CHART.grid), linewidth=0.6)
+    _style_frame(ax)
 
     fig.savefig(path, facecolor="white")
     return path
@@ -116,6 +118,11 @@ def _style_axis(ax, xlabel: str) -> None:
     ax.set_xlabel(xlabel, fontsize=CHART.font_size, color=text)
     ax.tick_params(labelsize=CHART.font_size, colors=text, length=0)
     ax.xaxis.grid(True, color=_colour(CHART.grid), linewidth=0.6)
+    _style_frame(ax)
+
+
+def _style_frame(ax) -> None:
+    """Grid behind the bars, only the left and bottom spines, both light."""
     ax.set_axisbelow(True)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)

@@ -126,8 +126,10 @@ class ChartStyle:
     # Close to FigureStyle.chart_width on the page, so the font prints at
     # about font_size.
     width_in: float = 6.0
-    bar_row_in: float = 0.34    # height added per bar
+    bar_row_in: float = 0.34    # height added per bar (horizontal bar charts)
     frame_in: float = 0.75      # axis labels and margins
+    column_height_in: float = 3.0   # utilization charts: UR on the vertical axis
+    label_wrap_chars: int = 10      # element names under a column wrap at this width
     font_size: float = 10.0
     dpi: int = 200
 
