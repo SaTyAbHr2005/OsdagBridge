@@ -60,7 +60,10 @@ class TableStyle:
     # balanced so single-line text sits near the middle of its row.
     row_pad: str = "4.5pt"
     row_pad_wide: str = "6.5pt"
-    rule_width: str = "0.5pt"
+    # One width for every table rule. 0.75pt is one screen pixel at 100% zoom;
+    # thinner rules are drawn as full, faint or missing pixels depending on
+    # where they fall, so equal rules look unequal when zoomed out.
+    rule_width: str = "0.75pt"
     extra_row_height: str = "2pt"
     # Space above and below every longtable; the caption already separates
     # a table from the paragraph before it.
