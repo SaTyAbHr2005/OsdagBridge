@@ -73,6 +73,19 @@ from osdagbridge.core.utils.common import (
 from osdagbridge.core.reports.report_utils import _render_value, get_girder_entries, _tex
 from .tables import longtable_begin
 
+
+def _lanes(input_dict) -> str:
+    """Lane count from the Lane Details table, or the IRC 6 Table 6 design lanes
+    for the carriageway width when the table is left empty."""
+    count = _render_value(input_dict, KEY_WC_LD_LANE_TABLE_COUNT)
+    if count:
+        return count + " (per IRC 5 Cl. 104.3.1)"
+    try:
+        from osdagbridge.core.utils.codes.irc6_2017 import IRC6_2017
+        return f"{IRC6_2017.table_6(float(input_dict.get(KEY_CARRIAGEWAY_WIDTH)))} (IRC 6 Table 6, from the carriageway width)"
+    except (TypeError, ValueError):
+        return "---"
+
 def ch2_input_parameters(m, input_dict, output_dict=None):
     girder_entries = get_girder_entries(input_dict)
     n_girders = len(girder_entries)
@@ -156,7 +169,7 @@ Where the user has modified additional inputs, those values are reported here. W
 \hline
 \textnormal{Footpath Width (m)} & """ + (_render_value(input_dict, KEY_TS_FOOTPATH_WIDTH, ' m')) + r""" (IRC 5 Cl. 104.3.6 min: 1.5 m) \\[\rowpad]
 \hline
-\textnormal{No. of Traffic Lanes} & """ + (_render_value(input_dict, KEY_WC_LD_LANE_TABLE_COUNT)) + r""" (per IRC 5 Cl. 104.3.1) \\[\rowpad]
+\textnormal{No. of Traffic Lanes} & """ + _lanes(input_dict) + r""" \\[\rowpad]
 \hline
 \end{longtable}
 
@@ -205,20 +218,31 @@ def _girder_tables(input_dict, n_girders):
         )
     ]
 
+    # Design converts the girder dimensions to metres in place; show them in mm.
+    def _mm(key):
+        value = input_dict.get(key)
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return _render_value(input_dict, key)
+        if number < 10:                     # a plate girder dimension in m
+            number *= 1000.0
+        return f"{number:g} mm"
+
     # Helper: one girder-dimension row
     def _dim_row(g_lbl, i):
         return (g_lbl + r""" & """
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_DEPTH}.G{i}.M1", ' mm'))
+                + _mm(f"{KEY_MP_GIRDER_DEPTH}.G{i}.M1")
                 + r""" & """
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_WEB_THICKNESS}.G{i}.M1", ' mm'))
+                + _mm(f"{KEY_MP_GIRDER_WEB_THICKNESS}.G{i}.M1")
                 + r""" & """
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_TOP_FLANGE_WIDTH}.G{i}.M1", ' mm'))
+                + _mm(f"{KEY_MP_GIRDER_TOP_FLANGE_WIDTH}.G{i}.M1")
                 + ', '
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_TOP_FLANGE_THICKNESS}.G{i}.M1", ' mm'))
+                + _mm(f"{KEY_MP_GIRDER_TOP_FLANGE_THICKNESS}.G{i}.M1")
                 + r""" & """
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_BOTTOM_FLANGE_WIDTH}.G{i}.M1", ' mm'))
+                + _mm(f"{KEY_MP_GIRDER_BOTTOM_FLANGE_WIDTH}.G{i}.M1")
                 + ', '
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_BOTTOM_FLANGE_THICKNESS}.G{i}.M1", ' mm'))
+                + _mm(f"{KEY_MP_GIRDER_BOTTOM_FLANGE_THICKNESS}.G{i}.M1")
                 + r""" \\[\rowpadwide]
 \hline
 """)
