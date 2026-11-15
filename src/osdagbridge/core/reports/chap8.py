@@ -138,7 +138,7 @@ IS 2062 & 2011 & Structural steel - yield and ultimate strength by grade \\
 \begin{itemize}
 \item Dead load densities per IRC 6:2017 Cl.203: structural steel $78.5 \ \text{kN/m}^3$, concrete $25.0 \ \text{kN/m}^3$, bituminous wearing course $24.0 \ \text{kN/m}^3$.
 \item Multi-lane live load reduction factors per IRC 6:2017 Cl.204.4 Table 6A: 1st lane = 1.0, 2nd lane = 0.8, 3rd lane onwards = 0.4.
-\item Impact factor (dynamic load allowance) computed from span per IRC 6:2017 Cl.208.2/208.3.
+\item Impact factor (dynamic load allowance) is computed from the span, per Cl.~208.2 and Cl.~208.3 of IRC 6:2017.
 \item Wind load applied as transverse, longitudinal, and vertical components per IRC 6:2017 Cl.209.3.3--209.3.5.
 \end{itemize}
 

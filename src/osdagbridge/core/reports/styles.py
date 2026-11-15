@@ -65,6 +65,9 @@ class TableStyle:
     # where they fall, so equal rules look unequal when zoomed out.
     rule_width: str = "0.75pt"
     extra_row_height: str = "2pt"
+    # Gap \tallcell keeps between a formula taller than a text line and the
+    # rule above it.
+    min_row_clearance: str = "3pt"
     # Space above and below every longtable; the caption already separates
     # a table from the paragraph before it.
     longtable_pre: str = "0pt"
@@ -268,6 +271,11 @@ def latex_definitions() -> str:
 \setlength{{\LTpost}}{{{t.longtable_post}}}
 \setlength{{\arrayrulewidth}}{{{t.rule_width}}}
 \setlength{{\extrarowheight}}{{{t.extra_row_height}}}
+% A cell taller than a text line (a square root, a stacked fraction) sits
+% against the rule above it; \tallcell keeps a gap between them.
+\newsavebox{{\tallcellbox}}
+\newcommand{{\tallcell}}[1]{{\sbox{{\tallcellbox}}{{#1}}%
+  \rule{{0pt}}{{\dimexpr\ht\tallcellbox+{t.min_row_clearance}\relax}}\usebox{{\tallcellbox}}}}
 
 \newlength{{\rowpad}}\setlength{{\rowpad}}{{{t.row_pad}}}
 \newlength{{\rowpadwide}}\setlength{{\rowpadwide}}{{{t.row_pad_wide}}}

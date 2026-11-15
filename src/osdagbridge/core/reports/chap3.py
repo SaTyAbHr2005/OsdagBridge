@@ -108,15 +108,16 @@ def _vehicle_live_load_table(input_dict) -> str:
                           header, caption="Vehicular Live Load (LL)", label="tab:vehicle-live-load",
                           col_sep=TABLE.col_sep_dense)
         + "\n".join(body) + "\n\\end{longtable}\n\\endgroup\n"
-        + r"\noindent\textit{Note: Vehicles are those selected in Additional Inputs $>$ Loading. "
-        r"Impact factor = 1 + IM for the span, IRC 6 Cl. 208.2 for Class A and wheeled custom "
+        # The note is kept in one piece so it never runs onto the next page.
+        + r"\par\noindent\begin{minipage}{\linewidth}\textit{Note: Vehicles are those selected in Additional Inputs $>$ Loading. "
+        r"Impact factor $=$~\mbox{$1 + \mathit{IM}$} for the span, IRC 6 Cl.~208.2 for Class A and wheeled custom "
         r"vehicles, Cl. 208.3 for Class AA, 70R and tracked custom vehicles; Cl. 208 gives none "
         r"for Class SV or the fatigue vehicle."
         + dla_note
         + r" Braking load is 20\% of one vehicle train (Cl. 211.2), acting at the stated height "
         r"above the deck; succeeding trains add 10\% and each lane beyond two adds 5\%. "
         r"Centrifugal force (Cl. 212) arises only on a horizontally curved deck; no horizontal "
-        r"curve is specified for this bridge, so it is taken as nil.}"
+        r"curve is specified for this bridge, so it is taken as nil.}\end{minipage}"
     )
 
 

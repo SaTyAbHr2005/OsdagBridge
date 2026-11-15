@@ -315,7 +315,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
 \groupcline{2-5}
  & Shear Buckling Coefficient, $k_v$ & IS 800 Cl. 8.4.2.2 & """ + _render_value(bridge.output_dict, KEY_SD_SHEAR_KV) + r""" & --- \\*[\rowpad]
 \groupcline{2-5}
- & Web Slenderness, $\lambda_w$ & $\sqrt{f_{yw}/(\sqrt{3}\,\tau_{cr})}$ & """ + _render_value(bridge.output_dict, KEY_SD_SHEAR_LAMBDA_W) + r""" & --- \\*[\rowpad]
+ & Web Slenderness, $\lambda_w$ & \tallcell{$\sqrt{f_{yw}/(\sqrt{3}\,\tau_{cr})}$} &""" + _render_value(bridge.output_dict, KEY_SD_SHEAR_LAMBDA_W) + r""" & --- \\*[\rowpad]
 \groupcline{2-5}
  & Design Shear Stress, $\tau_b$ & IRC 22 Cl. 603.3.3.2 & """ + _render_value(bridge.output_dict, KEY_SD_SHEAR_TAU_B, " MPa") + r""" & --- \\*[\rowpad]
 \groupcline{2-5}
@@ -380,7 +380,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
         t56_rows.append(
             r"\multirow{5}{*}{\makecell{" + lbl + r"""}} & Elastic Critical Moment, $M_{cr}$ & IRC 22 Cl. 603.3.3.1 & """ + _render_value(bridge.output_dict, KEY_SD_LTB_MCR, " kN-m") + r""" & --- \\*[\rowpad]
 \groupcline{2-5}
- & Non-dim. Slenderness, $\bar{\lambda}_{LT}$ & $\sqrt{M_p / M_{cr}}$ & """ + _render_value(bridge.output_dict, KEY_SD_LTB_LAMBDA) + r""" & --- \\*[\rowpad]
+ & Non-dim. Slenderness, $\bar{\lambda}_{LT}$ & \tallcell{$\sqrt{M_p / M_{cr}}$} &""" + _render_value(bridge.output_dict, KEY_SD_LTB_LAMBDA) + r""" & --- \\*[\rowpad]
 \groupcline{2-5}
  & LTB Reduction Factor, $\chi_{LT}$ & IS 800 Cl. 8.2.2 & """ + _render_value(bridge.output_dict, KEY_SD_LTB_CHI) + r""" & --- \\*[\rowpad]
 \groupcline{2-5}
@@ -666,7 +666,7 @@ def ch5_design_checks(checks_data, bridge, fig_dir=None) -> str:
         return (s + " kN") if s else ""
 
     t514_content = (
-        r"Design Resistance, $Q_u$ & \tablesmallfont\makecell{$Q_u=\min(Q_{u,s},\,Q_{u,c})$\\[3pt]$Q_{u,s}=\dfrac{0.8\,f_u\,(\pi d^2/4)}{\gamma_v}$\\[3pt]$Q_{u,c}=\dfrac{0.29\,\alpha\,d^2\sqrt{f_{ck}\,E_{cm}}}{\gamma_v}$} & "
+        r"Design Resistance, $Q_u$ & \tablesmallfont\tallcell{\makecell{$Q_u=\min(Q_{u,s},\,Q_{u,c})$\\[6pt]$Q_{u,s}=\dfrac{0.8\,f_u\,(\pi d^2/4)}{\gamma_v}$\\[8pt]$Q_{u,c}=\dfrac{0.29\,\alpha\,d^2\sqrt{f_{ck}\,E_{cm}}}{\gamma_v}$}} & "
         + _kn(_dr_sc.get(KEY_SD_SC_Qu_kN)) + r""" & IRC 22 Cl. 606.3.1 (Eq. 6.1) \\[\rowpad]
 \hline
 Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
@@ -1372,7 +1372,7 @@ Design Shear per unit width, $V_{Ed}$ & $\gamma_{DL} V_{DL} + \gamma_{LL}(1{+}IF
 \hline
 Effective depth, $d$ & $t_s - c_{nom} - \phi/2$ & """ + _dkf(KEY_DD_D_BOT, nd=1) + r""" mm & --- \\[\rowpad]
 \hline
-Size factor, $k$ & $1 + \sqrt{200/d} \leq 2.0$ & """ + (f"{min(1.0 + (200.0 / _dkv(KEY_DD_D_BOT)) ** 0.5, 2.0):.3f}" if (_dk_has and _dkv(KEY_DD_D_BOT) > 0) else _DKPH) + r""" & --- \\[\rowpad]
+Size factor, $k$ & \tallcell{$1 + \sqrt{200/d} \leq 2.0$} &""" + (f"{min(1.0 + (200.0 / _dkv(KEY_DD_D_BOT)) ** 0.5, 2.0):.3f}" if (_dk_has and _dkv(KEY_DD_D_BOT) > 0) else _DKPH) + r""" & --- \\[\rowpad]
 \hline
 Long.\ reinforcement ratio, $\rho_l$ & $A_{sl}/(b_w\,d) \leq 0.02$ & """ + (f"{min(_dkv(KEY_DD_AS_BOT) / (1000.0 * _dkv(KEY_DD_D_BOT)), 0.02):.4f}" if (_dk_has and _dkv(KEY_DD_D_BOT) > 0) else _DKPH) + r""" & --- \\[\rowpad]
 \hline
