@@ -223,9 +223,11 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0', prev
 
 % Custom Commands
 \newcommand{\placeholder}[1]{\textit{\textless #1\textgreater}}
-\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
-\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+% \hspace{0pt} lets TeX hyphenate the first word of a cell, which it
+% otherwise never breaks, so a long header word stays inside its column.
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash\hspace{0pt}}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash\hspace{0pt}}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash\hspace{0pt}}p{#1}}
 
 % Software-default asterisk
 \newcommand{\sdstar}{\textsuperscript{*}}

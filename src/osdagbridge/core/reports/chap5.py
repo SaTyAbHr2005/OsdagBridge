@@ -1431,7 +1431,7 @@ Cross bracing between adjacent plate girders provides lateral stability during c
 \noindent\textit{Note: Limit = 250 for compression members, 400 for tension members. $K = 1.0$ for members with both ends pinned.}
 
 \vspace{\tablegap}
-""" + longtable_begin(r"""|C{2.0cm}|L{1.8cm}|C{2.2cm}|C{3.0cm}|C{1.8cm}|C{1.8cm}|C{1.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Section} & \textbf{Governing LC} & \textbf{Demand (kN)} & \textbf{Capacity (kN)} & \textbf{UR} & \textbf{Status} \\[\rowpad]""", caption=r"""Cross Bracing Design --- Capacity Summary""") + r"""
+""" + longtable_begin(r"""|C{1.3cm}|L{1.7cm}|C{2.2cm}|C{2.1cm}|C{1.8cm}|C{1.8cm}|C{1.1cm}|C{1.4cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Section} & \textbf{Governing LC} & \textbf{Demand (kN)} & \textbf{Capacity (kN)} & \textbf{UR} & \textbf{Status} \\[\rowpad]""", caption=r"""Cross Bracing Design --- Capacity Summary""") + r"""
 """ + cb_capacity_content + r"""
 \end{longtable}
 \noindent\textit{Note: Designed per IS 800 Cl. 7 (compression) and Cl. 6 (tension). OsdagBridge cross-bracing module used.}
@@ -1457,7 +1457,7 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 
 \vspace{\tablegap}
 
-""" + longtable_begin(r"""|C{2.0cm}|L{1.8cm}|C{2.2cm}|C{3.0cm}|C{1.8cm}|C{1.8cm}|C{1.2cm}|C{1.8cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Section} & \textbf{Governing LC} & \textbf{Demand (kN)} & \textbf{Capacity (kN)} & \textbf{UR} & \textbf{Status} \\[\rowpad]""", caption=r"""End Diaphragm Design --- Capacity Summary""") + r"""
+""" + longtable_begin(r"""|C{1.3cm}|L{1.7cm}|C{2.2cm}|C{2.1cm}|C{1.8cm}|C{1.8cm}|C{1.1cm}|C{1.4cm}|""", r"""\tableheader \textbf{Panel} & \textbf{Member} & \textbf{Section} & \textbf{Governing LC} & \textbf{Demand (kN)} & \textbf{Capacity (kN)} & \textbf{UR} & \textbf{Status} \\[\rowpad]""", caption=r"""End Diaphragm Design --- Capacity Summary""") + r"""
 """ + ed_capacity_content + r"""
 \end{longtable}
 \noindent\textit{Note: Designed per IS 800 Cl. 7 (compression) and Cl. 6 (tension).}""" if ed_has_results else ed_note) + r"""
