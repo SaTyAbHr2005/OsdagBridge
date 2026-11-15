@@ -281,11 +281,15 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
     ur_cells = ' & '.join([ur] * n_cols)
     urs = f"Utilization Ratio & {ur_cells} \\\\"
 
+    # From six girders the columns are too narrow for "2.39 (Girder)" in the
+    # body font, so the table drops to the small table font.
+    font = r'\tablesmallfont' if n_cols >= 6 else ''
+
     # Keep the title with its table instead of leaving it at a page bottom.
     table1 = (r'\needspace{12\baselineskip}' + '\n'
               r'\noindent\textbf{Table 1 -- Final Bridge Geometry (after optimization)}' + '\n\n'
               r'\vspace{\gapsmall}' + '\n'
-              r'\noindent' + '\n'
+              r'\noindent{' + font + '\n'
               r'\begin{tabular}{' + col_spec + '}\n'
               r'\hline' + '\n'
               + header_row +
@@ -298,7 +302,7 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
               r'\hline' + '\n'
               + urs + '\n'
               r'\hline' + '\n'
-              r'\end{tabular}')
+              r'\end{tabular}}')
 
     return r"""
 \newpage
