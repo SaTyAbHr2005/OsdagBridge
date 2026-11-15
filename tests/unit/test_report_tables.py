@@ -19,8 +19,25 @@ def test_header_and_caption_repeat_on_every_page():
     assert r"\caption[{Loads}]{\textbf{Loads}}\label{tab:loads}" in first
     # The repeated caption is left out of the List of Tables and marked as continued.
     assert r"\caption[]{\textbf{Loads} " + TABLE.continued_caption + "}" in rest
-    assert first.count(HEADER) == 1 and rest.count(HEADER) == 1
+    cells = r"\textbf{A} & \textbf{B} \\"
+    assert first.count(cells) == 1 and rest.count(cells) == 1
     assert r"\endhead" in rest and r"\endfoot" in rest and r"\endlastfoot" in rest
+
+
+def test_shaded_header_redraws_its_top_rule_over_the_fill():
+    tex = longtable_begin(r"|L{5cm}|C{3cm}|", HEADER, caption="Loads")
+    first, rest = tex.split(r"\endfirsthead")
+    # 2 columns: widths + 4 column gaps + 3 vertical rules, on both header copies.
+    overlay = r"\tableheader\headtoprule{\dimexpr8.000cm+4\tabcolsep+3\arrayrulewidth\relax}"
+    assert overlay in first and overlay in rest
+    # Without a known width for every column there is no overlay.
+    assert r"\headtoprule" not in longtable_begin(r"|l|L{3cm}|", HEADER)
+
+
+def test_bare_p_columns_are_set_ragged_right():
+    tex = longtable_begin(r"|L{2cm}|p{5cm}|>{\centering\arraybackslash}p{3cm}|", HEADER)
+    spec = tex.splitlines()[0]
+    assert "|L{5cm}|" in spec and r">{\centering\arraybackslash}p{3cm}" in spec
 
 
 def test_every_broken_page_ends_with_a_continued_note():

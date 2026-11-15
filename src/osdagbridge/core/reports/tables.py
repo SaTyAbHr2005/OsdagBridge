@@ -92,7 +92,10 @@ def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
     col_sep  column gap in force where the table is placed, used for fitting
     """
     n_cols = count_columns(spec)
-    head = "\\hline\n" + header.strip() + "\n\\hline\n"
+    # A bare p{} column justifies its text, which leaves wide gaps in narrow
+    # cells; set it ragged right like the L columns.
+    spec = fit_to_text_width(re.sub(r"(?<=\|)p\{", "L{", spec), col_sep)
+    head = "\\hline\n" + shade_header(spec, header.strip()) + "\n\\hline\n"
 
     if caption:
         # The optional argument keeps the List of Tables entry in plain type.
