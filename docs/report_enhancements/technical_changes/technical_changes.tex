@@ -1,0 +1,395 @@
+% Technical changes document for the OsdagBridge report generator task.
+% Build from this folder (images come from make_figures.py):
+%   pdflatex technical_changes.tex   (run twice for the contents and references)
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[a4paper, margin=2.2cm, headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{osdagGreen}{HTML}{91B014}
+\definecolor{frameGrey}{HTML}{B5B5B5}
+\definecolor{codeBack}{HTML}{F5F7EE}
+
+\titleformat{\section}{\Large\bfseries\color{osdagGreen!60!black}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.7em}{}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist{itemsep=0.2em, topsep=0.3em}
+\captionsetup{font=small, labelfont=bf, skip=4pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small OsdagBridge report generator: technical changes}
+\fancyhead[R]{\small FOSSEE screening task}
+\fancyfoot[C]{\small \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\lstset{basicstyle=\ttfamily\small, backgroundcolor=\color{codeBack}, frame=single,
+        rulecolor=\color{frameGrey}, columns=fullflexible, keepspaces=true,
+        breaklines=true, xleftmargin=2pt, xrightmargin=2pt, aboveskip=4pt, belowskip=4pt}
+
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+% File paths may break after a slash.
+\newcommand{\file}[1]{\nolinkurl{#1}}
+\urlstyle{tt}
+% One cropped page region in a light frame.
+\newcommand{\shot}[2]{\fcolorbox{frameGrey}{white}{\includegraphics[width=#1]{images/#2}}}
+% Before above after, each labelled with its source page; [#1] is the image width.
+% The pair may break across a page, so screenshots stay large enough to read.
+\newcommand{\shotlabel}[2]{{\textbf{#1}\quad\small\itshape #2}\par\nobreak\vspace{2pt}}
+\newcommand{\compare}[5][0.8\textwidth]{%
+  \shotlabel{Before}{#3}\shot{#1}{#2}\par\vspace{8pt}
+  \shotlabel{After}{#5}\shot{#1}{#4}\par}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries OsdagBridge Design Report Generator}\\[6pt]
+  {\Large Technical Changes}\\[10pt]
+  {\small FOSSEE screening task: LaTeX Report Generator Refactoring and Enhancements}\\[3pt]
+  {\small Repository \url{https://github.com/SaTyAbHr2005/OsdagBridge}, branch \code{report-enhancements}}
+\end{center}
+
+\vspace{4pt}
+\tableofcontents
+
+\section{Summary}
+
+The report generator in \file{src/osdagbridge/core/reports/} was refactored and extended to cover the six items of the task. \code{Report_Before.pdf} and \code{Report_After.pdf} were built from the same inputs (30\,m span, 7.5\,m carriageway, Mumbai (Colaba), every other input at its default) with the same script, so every difference between the two reports comes from the code changes. The work is 88 commits on top of \file{upstream/dev}.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}Xll}
+\toprule
+ & Before & After \\
+\midrule
+Pages & 56 & 63 \\
+Long tables that repeat their header on a new page & 2 of 49 & 51 of 51 \\
+Rows running into the footer & page 30 (G4 stiffener row) & none \\
+Charts & none & 5 (3 utilization, 2 material) \\
+Automated tests for the report & none & 39 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The extra pages come from the List of Figures and List of Tables, the charts, the end diaphragm rows in the bill of materials, the design log chapter, and Table 5.1, which now gives each girder its own page instead of splitting a girder's rows across two pages.
+
+\paragraph{A note on PyLaTeX.} The task describes the changes in PyLaTeX terms. The generator in the repository does not use PyLaTeX: every chapter builds its LaTeX source as Python strings, and PyLaTeX is not a dependency of the project. The changes therefore use the LaTeX route the task allows for item~1 (\code{longtable} with \code{\endfirsthead} and \code{\endhead}) and the same LaTeX mechanisms for the other items. Section~\ref{sec:rationale} gives the reasons.
+
+\section{Key code and LaTeX changes}
+
+The figures show the same part of the report before and after; page numbers are pages of the PDF file.
+
+\subsection{Item 1: Table headers repeat across page breaks}
+
+All 51 long tables now open with \code{longtable_begin()} in \code{tables.py}. It writes the caption and header for the first page (\code{\endfirsthead}), repeats both under a ``(continued)'' caption on every following page (\code{\endhead}), and ends each broken page with ``Continued on next page'' (\code{\endfoot}). It also narrows the column widths when a table would run past the text block; 45 of the old tables were wider than the page once the column gaps were counted. Tables grouped by girder or by bracing panel use \code{group_rows()}, which keeps a group on one page.
+
+\begin{center}
+\compare{item1_before.png}{Report\_Before p.~31}{item1_after.png}{Report\_After p.~36}
+\captionof{figure}{Table 5.7 continued on a new page. Before: no caption and no header row. After: the caption is marked ``(continued)'' and the header row is repeated.}
+\end{center}
+
+\subsection{Item 2: Footer overlap and vertical spacing}
+
+On page 30 of the old report the footer rule sat about 6\,pt below the last line of text, and the stiffener table broke inside the G4 group, so the centred ``G4'' label hung below the break and over the footer.
+
+\begin{itemize}
+  \item \code{headheight} and \code{footskip} are now set in the page geometry from \code{styles.PAGE}. This also removed 54 fancyhdr warnings.
+  \item Rows inside a group end in \code{\\*} and are separated by \code{\groupcline}, a copy of \code{\cline} that cannot be followed by a page break, so a group that does not fit moves to the next page whole.
+  \item \code{keep_rows_together()} runs over the finished document. A table of six rows or fewer moves to the next page whole, and a longer table is never broken after its first row or before its last, so no page carries one stray row.
+  \item Cell padding (\code{\extrarowheight}, \code{\rowpad}) was rebalanced so single-line rows sit in the middle of the row, and \code{\tallcell} keeps 3\,pt above square roots and stacked fractions.
+  \item The ``software default value'' note sits inside the footer, above its rule.
+\end{itemize}
+
+\begin{center}
+\compare{item2_before.png}{Report\_Before p.~30}{item2_after.png}{Report\_After p.~36}
+\captionof{figure}{Foot of the stiffener table. Before: the ``G4'' label is printed over the footer. After: the G4 block stays together and clear of the footer.}
+\end{center}
+
+\subsection{Item 3: Vehicle and footpath live loads}
+
+\code{live_loads.py} builds the rows and \code{chap3.py} only formats them. The single mixed table became two.
+
+The Vehicular Live Load table has one row per vehicle ticked in Additional Inputs > Loading, custom vehicles included, with columns for total load (kN), impact factor, braking load (considered or not, value in kN, eccentricity in m) and centrifugal force (kN). Impact factors follow IRC~6 Cl.~208.2 for Class~A and wheeled custom vehicles and Cl.~208.3 for Class~AA, 70R and tracked vehicles. Braking is 20\,\% of the first train (Cl.~211.2), applied at the eccentricity entered in the Loading tab; Class~SV braking follows its own checkbox. The Footpath Live Load table gives whether a footpath exists, its width, the pressure basis and the load in kN/m\textsuperscript{2}. \code{IRC6_2017.cl_208_3_impact_factor} gained an optional \code{tracked} argument so each vehicle gets its own factor; its default behaviour is unchanged.
+
+\begin{center}
+\shotlabel{Before}{Report\_Before p.~13}\shot{0.8\textwidth}{item3_before.png}\par\vspace{8pt}
+\shotlabel{After}{Report\_After pp.~15--16}\shot{0.8\textwidth}{item3_after_vehicle.png}\par\vspace{4pt}
+\shot{0.8\textwidth}{item3_after_footpath.png}\par
+\captionof{figure}{Before: one table with every vehicle in a single cell, braking ``N/A'' and the footpath load blank. After: a vehicle table with one row per selected vehicle, and a separate footpath table.}
+\end{center}
+
+\subsection{Item 4: Utilization ratio charts in Section 5.5}
+
+The rows of the Overall Design Check Summary are now \code{SummaryRow} records with a numeric UR, and the table and the charts are both drawn from that one list, so they cannot disagree. \code{charts.ur_bar_chart()} draws one column chart per element group (plate girders, deck slab, cross bracing, end diaphragms) with the utilization ratio on the y-axis and a red dashed horizontal line at UR = 1.0. Failing columns are red, hatched and labelled FAIL. A group with no UR gets one sentence instead of an empty chart. In this baseline run the end diaphragm design returned no results, so Section 5.5 has three charts; the Ahmedabad run in Section~\ref{sec:other-inputs} produced the end diaphragm chart as well.
+
+\begin{center}
+\compare[0.66\textwidth]{item4_before.png}{Report\_Before p.~44}{item4_after.png}{Report\_After p.~50}
+\captionof{figure}{Section 5.5. Before: the summary table only. After: the same table followed by one chart per element group, two of which are shown.}
+\end{center}
+
+\subsection{Item 5: Material quantity charts in Chapter 7}
+
+The bill of materials had no end diaphragm rows. \code{boq_generator.end_diaphragm_quantities()} adds them as item 7: one diaphragm at each support of every girder pair, with chords and diagonals for cross-bracing diaphragms and one beam for rolled or welded ones. \code{charts.quantity_bar_chart()} then draws Figure 7.1, structural steel tonnage for girders, cross bracing and end diaphragms, and Figure 7.2, concrete volume (m\textsuperscript{3}) next to reinforcement weight (MT) in two panels with their own scales. Both charts are saved as PNG files in the report's temporary build folder, embedded with a LaTeX \code{figure} like the other figures, and deleted with that folder after compiling.
+
+\begin{center}
+\compare[0.62\textwidth]{item5_before.png}{Report\_Before p.~51}{item5_after.png}{Report\_After p.~57}
+\captionof{figure}{Chapter 7. Before: the bill of materials without end diaphragms and without charts. After: end diaphragm rows 7(a) and 7(b), a one-line summary, and the two quantity charts.}
+\end{center}
+
+\subsection{Item 6: Central style module}
+
+\code{styles.py} is now the single place for page geometry, colours, fonts, table spacing, figure sizes, chart styling and the header and footer. Section~\ref{sec:style} describes its structure. The chapters no longer contain literal sizes or colours; they use the names the module defines. Before, the same values were repeated in the preamble and in each chapter:
+
+\begin{minipage}[t]{0.485\textwidth}
+\textbf{Before} (original code)
+\begin{lstlisting}
+# report_generator.py
+\usepackage[a4paper, margin=1in]{geometry}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.12}
+\definecolor{osdagGreen}{HTML}{91B014}
+
+# chap2.py
+\setlength{\abovecaptionskip}{2pt}
+\vspace{0.4cm}
+
+# chap3.py (repeated before each table)
+\vspace{1em}
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.485\textwidth}
+\textbf{After}
+\begin{lstlisting}
+# styles.py
+@dataclass(frozen=True)
+class TableStyle:
+    col_sep: str = "4pt"
+    array_stretch: float = 1.12
+    row_pad: str = "4.5pt"
+    rule_width: str = "0.75pt"
+    ...
+
+# chap3.py
+\vspace{\tablegap}
+""" + longtable_begin(spec, header,
+        caption="Dead Load -- Self Weight")
+\end{lstlisting}
+\end{minipage}
+
+Moving the values out also showed four places where a setting leaked: a \code{\tabcolsep} change in Section 2.2 that carried into every later table, a caption gap set in Chapter~2, chapter headings losing their format when the table of contents was turned off, and a second chapter-heading definition in the executive summary. All four are gone. Because every table now takes its header style from one macro, the headers look the same throughout the report:
+
+\begin{center}
+\compare{item6_before.png}{Report\_Before p.~13}{item6_after.png}{Report\_After p.~15}
+\captionof{figure}{Before: lowercase, unshaded header rows. After: every table uses the shaded header from \code{\tableheader}.}
+\end{center}
+
+\subsection{Fixes after a page-by-page review}
+
+The finished report was read page by page at normal screen zoom. Each fix below is in the shared report code, so it applies to every table and page.
+
+\begin{itemize}
+  \item \textit{Rules of different weights.} longtable draws every \code{\hline} twice, one copy on each side of a possible page break, and the overlapping copies rendered darker than the other rules. \code{styles.py} redefines the longtable rule so it is drawn once. The header fill also stops one rule width short of the rules, because colortbl paints a cell's fill after the rules beside it. All rules are 0.75\,pt.
+  \item \textit{Half-empty pages.} Five forced page breaks in Chapters 2, 5 and 8 were removed.
+  \item \textit{Header words overflowing their columns.} The L, C and R column types start with \code{\hspace{0pt}}, which lets a long first word hyphenate.
+  \item \textit{Drawings far from their captions.} The six section views in Chapter~6 are cropped to the drawing and capped at 3.5\,cm high.
+  \item \textit{Smaller fixes.} The vehicle load note keeps ``1 + IM'' together, page numbers are roman for the front matter and ``Page $n$ of $N$'' from the executive summary, and Table~1 is fitted to the text width.
+\end{itemize}
+
+\subsection{Checked with other locations and settings}
+\label{sec:other-inputs}
+
+To look for values written into the report code, reports were also built for other locations and settings with \file{tools/build_sample_report.py}:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}X}
+\toprule
+Location & Span, carriageway & Other inputs \\
+\midrule
+Ahmedabad, Gujarat & 40\,m, 11\,m (3 lanes, 5 girders) & footpaths on both sides, 10\textdegree{} skew \\
+Dhubri, Assam (seismic zone V) & 25\,m, 7.5\,m & footpath on one side \\
+Chennai, Tamil Nadu & 35\,m, 9\,m & median; 70R wheeled, 70R bogie and fatigue vehicles unticked; no Class SV braking; braking eccentricity 1.5\,m \\
+Bagalkote, Karnataka & 30\,m, 7.5\,m & M35 deck concrete \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+All four compiled without LaTeX errors. The location values (seismic zone and zone factor, wind speed, shade temperatures), the lane and girder counts, the footpath and median rows, the vehicle table and the impact factors all followed the inputs. The runs found three faults, now fixed: the bill of materials printed ``M40'' and ``Fe~500'' whatever grades were chosen, computed widths printed as 15.649999999999999, and chart labels such as ``Compression'' were split mid-word.
+
+\section{Files altered}
+
+All paths are under \file{src/osdagbridge/} unless shown otherwise.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.4cm}>{\raggedright\arraybackslash}X}
+\toprule
+File & Change \\
+\midrule
+\file{core/reports/styles.py} & New. Central style module (Section~\ref{sec:style}). \\
+\file{core/reports/tables.py} & New. \code{longtable_begin()}, \code{fit_to_text_width()}, \code{group_rows()}, \code{keep_rows_together()}. \\
+\file{core/reports/charts.py} & New. Utilization column charts and material quantity charts. \\
+\file{core/reports/live_loads.py} & New. Vehicle and footpath rows from the Loading tab. \\
+\file{core/reports/report_generator.py} & Preamble built from the style module, preview watermark, PDF properties, List of Figures and Tables, chapter selection, image cropping, page-break pass. \\
+\file{core/reports/executive_summary.py} & Critical Checks box, key outcomes computed from the results, readable check names, girder filter. \\
+\file{core/reports/chap2.py} to \code{chap8.py} & Tables through \code{longtable_begin()}, style names instead of literals, the live load tables, the UR and quantity charts, the defects listed in Section~\ref{sec:polish}. \\
+\file{core/reports/report_utils.py} & Numbered figure captions, $\le$ and $\ge$ in check names, rounding of floating-point noise. \\
+\file{core/boq/boq_generator.py} & End diaphragm rows; crash barrier area accepted in m\textsuperscript{2} or mm\textsuperscript{2}. \\
+\file{core/utils/codes/irc6_2017.py} & Optional \code{tracked} argument for Cl.~208.3. \\
+\file{desktop/ui/dialogs/report_options.py} & Preview flag and a ``Summary charts'' item. \\
+\file{tests/unit/}, \file{tests/integration/} & New. 39 tests for the report (Section~\ref{sec:tests}). \\
+\file{tools/build_sample_report.py} & New. Builds a report through the real application window. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Structure of the centralized formatting module}
+\label{sec:style}
+
+\code{styles.py} holds frozen dataclasses with one module-level instance each. Python code reads the instances; LaTeX code reads the names that \code{latex_definitions()} generates from them.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}X}
+\toprule
+Class (instance) & What it holds \\
+\midrule
+\code{PageStyle} (\code{PAGE}) & paper, font size, margins, header height, footer distance, line spacing \\
+\code{Palette} (\code{COLORS}) & brand green, table header tint, PASS and FAIL colours, design log colours \\
+\code{TableStyle} (\code{TABLE}) & column gaps, row padding, rule width, formula clearance, the six-row keep-whole limit, ``continued'' labels \\
+\code{SpacingScale} (\code{SPACING}) & four vertical gaps: within a block, attached note, between tables, between groups \\
+\code{FigureStyle} (\code{FIGURE}) & figure widths for each kind of figure, caption gaps \\
+\code{ChartStyle} (\code{CHART}) & bar colours, limit line colour, chart size, font size, resolution \\
+\code{Typography} (\code{TYPOGRAPHY}) & chapter and table of contents headings, caption format, small table font \\
+\code{TitlePageStyle}, \code{HeaderFooterStyle} & title page sizes and gaps; running header, footer text and rule \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}X}
+\toprule
+Function & Returns \\
+\midrule
+\code{document_class()}, \code{geometry_package()} & the \code{\documentclass} and \code{geometry} lines \\
+\code{latex_definitions()} & colours, lengths and macros used by the chapters (next table) \\
+\code{page_styles()} & fancyhdr page styles, including the footer note \\
+\code{heading_formats()}, \code{caption_setup()} & chapter and section headings; caption format \\
+\code{front_matter()}, \code{main_matter()} & roman and arabic page numbering \\
+\code{length_cm()}, \code{text_width_cm()} & lengths in cm, used to fit tables to the page \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}X}
+\toprule
+LaTeX name & Use \\
+\midrule
+\code{\tableheader}, \code{\tableheadernext} & shaded first and second header rows \\
+\code{\statuspass{}}, \code{\statusfail{}} & PASS and FAIL in check tables \\
+\code{\rowpad}, \code{\rowpadwide}, \code{\colseptight}, \code{\colsepdense} & row padding and column gaps \\
+\code{\gapline}, \code{\gapsmall}, \code{\tablegap}, \code{\sectiongap} & vertical gaps between blocks \\
+\code{\groupcline}, \code{\hlinenobreak} & rules that cannot be followed by a page break \\
+\code{\tallcell{}} & clearance above a square root or stacked fraction \\
+\code{\tablesmallfont}, \code{\tablecontinuednote} & small table text, ``Continued on next page'' \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Changing a margin, a colour or a row gap is a one-line edit in \code{styles.py}. \file{tests/unit/test_report_styles.py} checks the length conversions, the page geometry and that the definitions provide every macro the chapters use; the integration test compiles them.
+
+\section{Rationale for the main choices}
+\label{sec:rationale}
+
+\paragraph{LaTeX strings instead of PyLaTeX.} The existing chapters, about 3\,300 lines, write LaTeX directly, and PyLaTeX is not installed in the project environment. Rewriting every chapter in PyLaTeX would have been a full rewrite of working code with a new dependency, and the task allows the longtable route for item~1. The new modules give the chapters the structure PyLaTeX would have given (one function opens every table, one module holds every style value) without changing how the report is produced.
+
+\paragraph{longtable for every multi-page table.} The preamble already loaded longtable, it works with colortbl and hhline, and its \code{\endfirsthead}/\code{\endhead}/\code{\endfoot} sections are exactly what item~1 asks for. Putting the opening in one function means all 51 tables get the same caption, header and ``continued'' behaviour.
+
+\paragraph{One pass for page breaks.} Orphaned rows could have been fixed table by table, but there are 51 tables and the rows depend on the input. \code{keep_rows_together()} works on the finished LaTeX, so every table, including future ones, follows the same rule.
+
+\paragraph{A dataclass module for styles.} Frozen dataclasses are typed, can be imported by Python code (the chart module and the table-width fitting read them) and cannot be changed by accident while a report is built. Plain LaTeX macros alone could not be used from Python.
+
+\paragraph{matplotlib for the charts.} The bundled TeX distribution has no pgfplots, so the charts are matplotlib PNG files. They use matplotlib's object interface (\code{Figure}) rather than pyplot, because the report runs on a worker thread while the Qt window is open and pyplot keeps global state that is not safe there.
+
+\paragraph{Chart and table colours.} PASS and FAIL bars are blue and red, a pair that stays distinguishable for red-green colour blindness, and failing bars are also hatched and labelled FAIL so they read in greyscale print. The PASS and FAIL text colours are at least 4.5:1 against white. The table header tint is a 15\,\% tint of the brand green, so it marks the header without competing with the status colours. The material chart uses two panels rather than two y-axes on one chart, because two scales on one axis invite comparing bar heights that have different units.
+
+\paragraph{Table rules.} Rules are 0.75\,pt, one screen pixel at 100\,\% zoom, and each is drawn once. Thinner or doubled rules render with uneven weight on screen.
+
+\section{Visual enhancements and polish}
+\label{sec:polish}
+
+Beyond the six items, these changes improve how the report reads:
+
+\begin{itemize}
+  \item A Critical Checks box on the first summary page: the design verdict, the governing check, each failing check with its girders and highest UR, and a link to its section.
+  \item Key Design Outcomes computed from the results; the old text was fixed as ``Girder design pass'' whatever the results.
+  \item Green PASS and bold red FAIL in every check table, and every UR above 1.0 highlighted; 65 of 80 PASS cells were plain text before.
+  \item A List of Figures and a List of Tables, numbered captions on the analysis plots, PDF title and author, and bookmarks opened at chapter level.
+  \item Roman page numbers for the contents and lists, and ``Page $n$ of $N$'' from the executive summary on.
+  \item A ``PREVIEW --- NOT FOR CONSTRUCTION'' watermark on reports built from the Preview button.
+  \item A ``Summary charts'' item in the report options, and the chapter ticks in the options now honoured (Chapters 7 to 10 were always included, and the design log was built and then dropped).
+  \item Report values that were wrong or blank: Chapter 4 load cases in a stable order, no ``-0.000'', computed wind speed Vz and pressure Pz, wearing course load in kN/m\textsuperscript{2}, units in the summary, 0\textdegree{} skew shown when none is entered, stiffener sizes labelled ``required'' in Optimized mode, readable stiffener check names, the crash barrier volume (0.00 before).
+\end{itemize}
+
+\begin{center}
+\compare[0.66\textwidth]{summary_before.png}{Report\_Before p.~3}{summary_after.png}{Report\_After p.~6}
+\captionof{figure}{Executive summary. After: girder spacing and deck thickness with units, readable check names in the design status, the overall UR in red, and the Critical Checks box.}
+\end{center}
+
+\appendix
+
+\section{Tests and how to reproduce the reports}
+\label{sec:tests}
+
+The 39 tests cover the style module, the table helper, the charts, the live load selection, the end diaphragm quantities, the executive summary and the design log. \file{tests/integration/test_report_latex.py} compiles a short document with the bundled pdflatex, using a project name full of characters LaTeX treats specially.
+
+\begin{lstlisting}
+python -m pytest tests
+python tools/build_sample_report.py sample.pdf --keep-build build/
+python tools/build_sample_report.py other.pdf --state Assam --district Kamrup --span 25 \
+    --main-input "geometry.footpath=Single Side"
+\end{lstlisting}
+
+The script opens the application, enters the inputs, runs Design and then Generate Report, so the PDF goes through the same code as a user's report. \code{--main-input} sets a main-page field before Design, and \code{--set-input} changes a Loading tab input that only the report reads.
+
+\section{Backend issues found}
+
+These are outside the report generator and were left for separate issues.
+
+\begin{enumerate}
+  \item \code{IRC6_2017.cl_211_2_braking_force} raises \code{UnboundLocalError} for one or two lanes, which is why the old report printed ``N/A'' for braking.
+  \item \code{cl_208_3_impact_factor} always returns the tracked-vehicle value, so the analysis applies 1.100 to every vehicle, including Class~A, where Cl.~208.2 gives 1.207 at a 30\,m span.
+  \item The grillage analysis loads only the Table~6A Class~A/70R combinations; the vehicle and braking inputs of the Loading tab do not reach the analysis.
+  \item The end diaphragm design finds no member force above its tolerance, so no end diaphragm member checks are reported for the baseline inputs.
+  \item \code{defaults.py} stores the crash barrier area in mm\textsuperscript{2} and the girder depth in mm, while other code reads them in m\textsuperscript{2} and m.
+  \item With a 10\textdegree{} skew (40\,m span, five girders) the backend returned no grillage results, so Table~4.1 says no results are available.
+  \item Changing the Footpath dropdown raises \code{AttributeError} in \code{input_dock.py}.
+\end{enumerate}
+
+\section{Known limits}
+
+\begin{itemize}
+  \item In \code{array} and \code{longtable} the padding after a row is measured from its first line, so a row whose text wraps has less space below it than a single-line row. Fixing this means patching LaTeX internals.
+  \item A per-girder block never breaks across pages, so Table~5.1 takes one page per girder and some Chapter~5 pages end part empty.
+  \item At some zoom levels a viewer rounds one 0.75\,pt rule to one pixel and the next to two, so one line can look a shade heavier on screen. Printed, they are equal.
+  \item Rolled and welded end diaphragms have no design check in the backend, so they have no utilization chart.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,6 @@
+# LaTeX build files; the finished PDF is ../Technical_Changes.pdf
+*.aux
+*.log
+*.toc
+*.out
+technical_changes.pdf
