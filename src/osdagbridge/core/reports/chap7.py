@@ -2,7 +2,9 @@ import logging
 import os
 
 from .charts import quantity_bar_chart
-from .report_utils import _fig_embed
+from osdagbridge.core.utils.common import KEY_DECK_CONCRETE_GRADE_BASIC, KEY_DS_REINF_MATERIAL
+
+from .report_utils import _fig_embed, _tex
 from .styles import FIGURE, TABLE
 from .tables import longtable_begin
 
@@ -63,6 +65,12 @@ def _quantity_charts(input_dict, fig_dir):
             "\n\n" + "\n".join(figures) + "\n")
 
 
+def _grade(input_dict, key) -> str:
+    """' (grade)' for a material picked in the inputs, or '' when none is set."""
+    grade = str(input_dict.get(key) or "").strip()
+    return f" ({_tex(grade)})" if grade else ""
+
+
 def _end_diaphragm_rows(rows: list) -> str:
     """Item 7 of the bill of materials: one sub-item per end diaphragm member kind."""
     if not rows:
@@ -99,9 +107,9 @@ def ch7_quantities(input_dict, fig_dir=None):
 \hline
 2(c) & Cross Bracing - Diagonal Chord & """ + str(input_dict.get("bracing_diag_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("bracing_diag_qty", "N.A.")) + r""" & """ + str(input_dict.get("bracing_diag_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("bracing_diag_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("bracing_diag_wt_total", "N.A.")) + r""" \\
 \hline
-3 & Concrete (M40) for Deck Slab & """ + str(input_dict.get("concrete_deck_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_qty", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_wt_total", "N.A.")) + r""" \\
+3 & Concrete""" + _grade(input_dict, KEY_DECK_CONCRETE_GRADE_BASIC) + r""" for Deck Slab & """ + str(input_dict.get("concrete_deck_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_qty", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_wt_total", "N.A.")) + r""" \\
 \hline
-4 & Reinforcement Steel (Fe 500) & """ + str(input_dict.get("rebar_deck_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_qty", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_wt_total", "N.A.")) + r""" \\
+4 & Reinforcement Steel""" + _grade(input_dict, KEY_DS_REINF_MATERIAL) + r""" & """ + str(input_dict.get("rebar_deck_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_qty", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_wt_total", "N.A.")) + r""" \\
 \hline
 5 & Shear Stud Connectors & """ + str(input_dict.get("shear_studs_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("shear_studs_qty", "N.A.")) + r""" & """ + str(input_dict.get("shear_studs_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("shear_studs_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("shear_studs_wt_total", "N.A.")) + r""" \\
 \hline

@@ -33,6 +33,10 @@ def _render_value(source_dict, key, unit=""):
     val = source_dict.get(key)
     if val in ("", None):
         return ""
+    if isinstance(val, float):
+        # Computed widths such as 15.649999999999999 print as 15.65; values
+        # without that floating-point noise are unchanged.
+        val = round(val, 6)
     return _tex(val) + unit
 
 

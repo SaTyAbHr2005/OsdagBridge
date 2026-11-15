@@ -5,9 +5,10 @@ import random
 from osdagbridge.core.reports.chap3 import _wearing_course_load
 from osdagbridge.core.reports.chap8 import design_log_chapter
 from osdagbridge.core.reports.chap4 import _load_case_order
+from osdagbridge.core.reports.chap7 import ch7_quantities
 from osdagbridge.core.reports.executive_summary import _deck_check_name, _readable_check, executive_summary
 from osdagbridge.core.utils.common import (
-    KEY_TS_NO_OF_GIRDERS, KEY_WC_DENSITY, KEY_WC_MATERIAL, KEY_WC_THICKNESS,
+    KEY_DECK_CONCRETE_GRADE_BASIC, KEY_DS_REINF_MATERIAL, KEY_TS_NO_OF_GIRDERS, KEY_WC_DENSITY, KEY_WC_MATERIAL, KEY_WC_THICKNESS,
 )
 
 
@@ -69,3 +70,11 @@ def test_design_log_lists_every_line_coloured_by_level():
     assert r"\textcolor{statusPass}{[10:" in tex
     assert r"\textcolor{logWarning}{[10:" in tex
     assert design_log_chapter([]) == ""
+
+
+def test_bill_of_materials_names_the_selected_grades():
+    tex = ch7_quantities({KEY_DECK_CONCRETE_GRADE_BASIC: "M35", KEY_DS_REINF_MATERIAL: "Fe 415"})
+    assert "Concrete (M35) for Deck Slab" in tex
+    assert "Reinforcement Steel (Fe 415)" in tex
+    # No grade picked: no grade is printed rather than a made-up one.
+    assert "(M40)" not in ch7_quantities({}) and "(Fe 500)" not in ch7_quantities({})
