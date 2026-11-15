@@ -1,4 +1,4 @@
-# LaTeX build files; the finished PDF is ../Technical_Changes.pdf
+# LaTeX build files; the finished PDF is ../Report.pdf
 *.aux
 *.log
 *.toc
