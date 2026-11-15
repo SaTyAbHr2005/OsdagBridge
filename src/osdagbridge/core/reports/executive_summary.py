@@ -4,6 +4,7 @@
 
 from osdagbridge.core.reports.report_utils import _fig_or_placeholder, _render_value, _tex, get_girder_entries
 from osdagbridge.core.reports.styles import TYPOGRAPHY
+from osdagbridge.core.reports.tables import shade_header
 from osdagbridge.core.utils.common import (
     KEY_CARRIAGEWAY_WIDTH,
     KEY_SD_SECTION_DESIGNATION,
@@ -64,9 +65,11 @@ def _critical_checks_box(failures, governing) -> str:
             + (r"\statusfail{" + f"{ur:.2f}" + "}" if ur is not None else "---")
             + r" & Section~\ref{" + section + r"} \\ \hline"
             for check, members, ur, section in failures)
-        lines.append(r"\begin{tabular}{|L{6.2cm}|C{3.2cm}|C{1.6cm}|C{2.6cm}|}" "\n"
-                     r"\hline \tableheader \textbf{Failing Check} & \textbf{Members} & \textbf{Max UR}"
-                     r" & \textbf{Details} \\ \hline" "\n" + rows + "\n" r"\end{tabular}\\[3pt]")
+        spec = r"|L{6.2cm}|C{3.2cm}|C{1.6cm}|C{2.6cm}|"
+        header = shade_header(spec, r"\tableheader \textbf{Failing Check} & \textbf{Members} & \textbf{Max UR}"
+                                    r" & \textbf{Details} \\")
+        lines.append(r"\begin{tabular}{" + spec + "}\n" r"\hline " + header + r" \hline" "\n"
+                     + rows + "\n" r"\end{tabular}\\[3pt]")
     else:
         lines.append(r"All design checks pass.\\[3pt]")
     lines.append(r"Every check is listed in Section~\ref{sec:overall-summary}.")
@@ -245,7 +248,7 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
 
     # Header row
     hdr_cells = ' &\n  '.join([r'\textbf{' + _tex(lbl) + '}' for lbl, _ in labels])
-    header_row = r'  \tableheader \textbf{} &' + '\n  ' + hdr_cells + r' \\' + '\n'
+    header_row = shade_header(col_spec, r'  \tableheader \textbf{} &' + '\n  ' + hdr_cells + r' \\') + '\n'
 
     # Member ID row
     mid_cells = ' & '.join([_tex(mid) for _, mid in labels])

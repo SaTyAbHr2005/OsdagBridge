@@ -64,6 +64,23 @@ def group_rows(label: str, rows: list[str], n_cols: int) -> str:
             + inner_rule.join(rows) + " \\\\[\\rowpad]\n\\hline")
 
 
+def shade_header(spec: str, header: str) -> str:
+    """Add the top-rule overlay to the first shaded row of ``header``.
+
+    ``\\tableheader`` fills the row, and the fill can hide the rule above it at
+    screen zoom; ``\\headtoprule`` draws that rule again over the fill. It
+    needs the full table width, so it is added only when every column of
+    ``spec`` has a width in cm.
+    """
+    widths = [float(w) for _, w in _WIDTH.findall(spec)]
+    n_cols = count_columns(spec)
+    if not widths or len(widths) != n_cols or r"\tableheader" not in header:
+        return header
+    width = (rf"\dimexpr{sum(widths):.3f}cm+{2 * n_cols}\tabcolsep"
+             rf"+{spec.count('|')}\arrayrulewidth\relax")
+    return header.replace(r"\tableheader", r"\tableheader\headtoprule{" + width + "}", 1)
+
+
 def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
                     col_sep: str = TABLE.col_sep) -> str:
     """LaTeX from ``\\begin{longtable}`` down to ``\\endlastfoot``.
@@ -91,7 +108,7 @@ def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
                           + TABLE.continued_caption + "}}\\\\\n")
 
     return (
-        r"\begin{longtable}{" + fit_to_text_width(spec, col_sep) + "}\n"
+        r"\begin{longtable}{" + spec + "}\n"
         + first_caption + head + "\\endfirsthead\n"
         + repeat_caption + head + "\\endhead\n"
         + r"\multicolumn{" + str(n_cols) + r"}{r}{\tablecontinuednote}\\" + "\n"

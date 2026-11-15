@@ -217,7 +217,15 @@ def latex_definitions() -> str:
 \definecolor{{logWarning}}{{HTML}}{{{c.log_warning}}}
 \definecolor{{logError}}{{HTML}}{{{c.log_error}}}
 \definecolor{{tableHeader}}{{HTML}}{{{c.table_header}}}
-\newcommand{{\tableheader}}{{\rowcolor{{tableHeader}}}}
+% Header row shading. PDF viewers snap fills to whole pixels, so a fill that
+% touches a 0.5pt rule hides it at screen zoom. The fill stops one rule width
+% short of the vertical rules, and \headtoprule draws the rule above the
+% header again over the fill (#1 = full table width).
+\newcommand{{\tableheader}}{{\rowcolor{{tableHeader}}[\dimexpr\tabcolsep-\arrayrulewidth\relax][\dimexpr\tabcolsep-\arrayrulewidth\relax]}}
+\makeatletter
+\newcommand{{\headtoprule}}[1]{{\leavevmode\rlap{{\hspace{{-\dimexpr\tabcolsep+\arrayrulewidth\relax}}%
+  \smash{{\raisebox{{\ht\@arstrutbox}}{{\rule{{#1}}{{\arrayrulewidth}}}}}}}}}}
+\makeatother
 \newcommand{{\statuspass}}[1]{{\textcolor{{statusPass}}{{#1}}}}
 \newcommand{{\statusfail}}[1]{{\textcolor{{statusFail}}{{\textbf{{#1}}}}}}
 

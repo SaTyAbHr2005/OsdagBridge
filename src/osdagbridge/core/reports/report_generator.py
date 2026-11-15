@@ -120,7 +120,7 @@ from osdagbridge.core.utils.common import (
 
 from osdagbridge.core.reports.report_utils import _tex
 from . import styles
-from .tables import fit_to_text_width
+from .tables import fit_to_text_width, shade_header
 from .executive_summary import executive_summary
 from .chap1 import ch1_project_info
 from .chap2 import ch2_input_parameters
@@ -315,8 +315,9 @@ def _document_control(m) -> str:
     cells = (m.subtitle or "Rev 0", m.report_date, description or "---", m.designer, m.reviewer, "")
     return (r"{\small\noindent\textbf{Document Control}\\[2pt]" "\n"
             r"\begin{tabular}{" + spec + "}\n"
-            r"\hline \tableheader \textbf{Rev} & \textbf{Date} & \textbf{Description} & \textbf{Prepared}"
-            r" & \textbf{Checked} & \textbf{Approved} \\ \hline" "\n"
+            r"\hline " + shade_header(spec, r"\tableheader \textbf{Rev} & \textbf{Date} & \textbf{Description}"
+                                     r" & \textbf{Prepared} & \textbf{Checked} & \textbf{Approved} \\")
+            + r" \hline" "\n"
             + " & ".join(_tex(c) for c in cells) + r" \rule{0pt}{6mm} \\ \hline" "\n"
             r"\end{tabular}\par}")
 
