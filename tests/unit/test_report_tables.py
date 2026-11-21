@@ -3,8 +3,11 @@
 import re
 
 from osdagbridge.core.reports.styles import TABLE, length_cm, text_width_cm
-from osdagbridge.core.reports.tables import (count_columns, fit_to_text_width, group_rows,
-                                             keep_rows_together, longtable_begin)
+from pylatex import LongTable, MultiColumn, NoEscape
+
+from osdagbridge.core.reports.tables import (add_row, count_columns, dumps, fit_to_text_width,
+                                             group_rows, keep_rows_together, longtable,
+                                             longtable_begin)
 
 HEADER = r"\tableheader \textbf{A} & \textbf{B} \\"
 
@@ -80,3 +83,38 @@ def test_group_rows_keep_a_group_on_one_page():
     assert tex.count(r"\groupcline{2-3}") == 2
     assert tex.rstrip().endswith(r"\hline")
     assert group_rows("G1", [], 3) == ""
+
+
+def test_tables_are_pylatex_longtables():
+    table = longtable(r"|L{5cm}|L{5cm}|", HEADER, caption="Loads")
+    assert isinstance(table, LongTable)
+    for i in range(8):
+        add_row(table, f"r{i}", MultiColumn(1, align="l|", data=NoEscape("x")))
+    tex = keep_rows_together(dumps(table))
+    for marker in (r"\endfirsthead", r"\endhead", r"\endfoot", r"\endlastfoot"):
+        assert tex.count(marker) == 1
+    # Every body row is padded and ruled; the first and next-to-last rows are
+    # locked to their neighbours even with PyLaTeX's "%" line ends.
+    assert tex.count(r"\\[\rowpad]") + tex.count(r"\\*[\rowpad]") == 8
+    assert tex.count(r"\hlinenobreak") == 2
+    assert longtable_begin(r"|L{5cm}|L{5cm}|", HEADER).rstrip().endswith(r"\endlastfoot%")
+
+
+def test_live_load_tables_are_built_with_pylatex():
+    from osdagbridge.core.reports.chap3 import _footpath_live_load_table, _vehicle_live_load_table
+    vehicles = _vehicle_live_load_table({})
+    assert vehicles.count(r"\begin{longtable}") == 1 and vehicles.count(r"\end{longtable}") == 1
+    assert r"\multicolumn{3}{c|}{\textbf{Braking Load (IRC 6 Cl. 211)}}" in vehicles
+    # Four cells span both header rows, in the first-page and the repeated header.
+    assert vehicles.count(r"\multirow{-2}{*}") == 8
+    footpath = _footpath_live_load_table({})
+    assert footpath.count(r"\\[\rowpad]") == 4 and "Not applied" in footpath
+
+
+def test_figures_are_pylatex_figures():
+    from osdagbridge.core.reports.report_utils import _fig_embed, _fig_or_placeholder
+    plot = _fig_embed(r"build\images\ur.png", "Utilization Ratios: deck")
+    assert plot.startswith(r"\begin{figure}[H]") and plot.rstrip().endswith(r"\end{figure}")
+    assert "{build/images/ur.png}" in plot and r"\caption[{Utilization Ratios}]" in plot
+    assert r"\caption*{Plan}" in _fig_or_placeholder(None, "Plan")
+    assert "PLACEHOLDER" in _fig_embed(None, "Missing plot")

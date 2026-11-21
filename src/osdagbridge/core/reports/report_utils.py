@@ -4,7 +4,11 @@ from osdagbridge.core.utils.common import (
     KEY_MP_GIRDER_DEPTH,
     KEY_TS_NO_OF_GIRDERS
 )
+from pylatex import Command, Figure, NoEscape
+from pylatex.figure import StandAloneGraphic
+
 from .styles import FIGURE
+from .tables import dumps
 
 
 def _tex(value):
@@ -81,45 +85,46 @@ def get_girder_entries(input_dict):
     return entries
 
 
+def _placeholder(caption):
+    """Framed box standing in for a figure whose image is missing."""
+    return NoEscape(r'\fbox{\parbox{' + FIGURE.placeholder_width + '}{' + '\n'
+                    r'\textit{[ PLACEHOLDER: ' + caption + r' ]}' + '\n' r'}}')
+
+
+def _image(path, options):
+    """\\includegraphics for an image already copied into the build folder."""
+    return StandAloneGraphic(filename=NoEscape(path.replace('\\', '/')), image_options=NoEscape(options))
+
+
 def _fig_or_placeholder(path, caption, width=FIGURE.summary_width):
-    """Embed figure if path is provided (file already copied to assets), else show placeholder box.
-    path is the relative path as pdflatex will see it (e.g. 'assets/plan.png').
+    """PyLaTeX Figure of an image with an unnumbered caption, or a placeholder box.
+    path is the path as pdflatex will see it (e.g. 'assets/plan.png').
     """
-    if path:
-        p = path.replace('\\', '/')
-        return (r'\begin{figure}[H]' + '\n'
-                r'\centering' + '\n'
-                r'\includegraphics[width=' + width + ']{' + p + '}\n'
-                r'\caption*{' + caption + '}\n'
-                r'\end{figure}')
-    return (r'\begin{figure}[H]' + '\n'
-            r'\centering' + '\n'
-            r'\fbox{\parbox{' + FIGURE.placeholder_width + '}{' + '\n'
-            r'\textit{[ PLACEHOLDER: ' + caption + r' ]}' + '\n'
-            r'}}' + '\n'
-            r'\caption*{' + caption + '}\n'
-            r'\end{figure}')
+    fig = Figure(position='H')
+    fig.append(NoEscape(r'\centering'))
+    fig.append(_image(path, 'width=' + width) if path else _placeholder(caption))
+    fig.append(Command('caption*', NoEscape(caption)))
+    return dumps(fig)
+
 
 def _fig_embed(path, caption, width=FIGURE.plot_width, height=None):
-    """Embed a real figure when path is provided (already copied); otherwise use an fbox placeholder."""
-    if path:
-        p = path.replace('\\', '/')
-        opts = 'width=' + width
-        if height:
-            opts += ',height=' + height + ',keepaspectratio'
-        return (r'\begin{figure}[H]' + '\n'
-                r'\vspace{' + FIGURE.plot_gap_outer + '}\n'
-                r'\centering' + '\n'
-                r'\includegraphics[' + opts + ']{' + p + '}\n'
-                r'\vspace{' + FIGURE.plot_gap_caption + '}\n'
-                # Numbered so the plot is listed in the List of Figures; the
-                # list takes the title up to the first colon.
-                r'\caption[{' + caption.split(':')[0] + '}]{' + FIGURE.plot_caption_size + ' ' + caption + '}\n'
-                r'\vspace{' + FIGURE.plot_gap_outer + '}\n'
-                r'\end{figure}')
-    # fbox placeholder — matches template exactly
-    return (r'\noindent\fbox{\parbox{' + FIGURE.placeholder_width + '}{' + '\n'
-            r'\textit{[ PLACEHOLDER: ' + caption + r' ]}' + '\n'
-            r'}}')
+    """PyLaTeX Figure of a plot or chart with a numbered caption; a placeholder box when path is empty."""
+    if not path:
+        return r'\noindent' + _placeholder(caption)
+    opts = 'width=' + width
+    if height:
+        opts += ',height=' + height + ',keepaspectratio'
+    gap_outer = Command('vspace', NoEscape(FIGURE.plot_gap_outer))
+    fig = Figure(position='H')
+    fig.append(gap_outer)
+    fig.append(NoEscape(r'\centering'))
+    fig.append(_image(path, opts))
+    fig.append(Command('vspace', NoEscape(FIGURE.plot_gap_caption)))
+    # Numbered so the plot is listed in the List of Figures; the list takes
+    # the title up to the first colon.
+    fig.append(Command('caption', NoEscape(FIGURE.plot_caption_size + ' ' + caption),
+                       options=NoEscape('{' + caption.split(':')[0] + '}')))
+    fig.append(gap_outer)
+    return dumps(fig)
 
 

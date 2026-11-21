@@ -46,7 +46,9 @@ from osdagbridge.core.utils.common import (
 from osdagbridge.core.reports.report_utils import _tex, _render_value
 from .live_loads import analysis_impact_factor, footpath_load, vehicle_rows
 from .styles import TABLE
-from .tables import longtable_begin
+from pylatex import MultiColumn, MultiRow, NoEscape
+
+from .tables import add_row, dumps, longtable, longtable_begin
 
 
 def _num(value, digits):
@@ -72,42 +74,55 @@ def _wearing_course_load(input_dict) -> str:
             f"= {thickness_mm / 1000.0 * density:.2f} kN/m\\textsuperscript{{2}}")
 
 
+def _head(*lines: str) -> NoEscape:
+    """Bold header cell; several lines are stacked with makecell."""
+    bold = [r"\textbf{" + line + "}" for line in lines]
+    return NoEscape(bold[0] if len(bold) == 1 else r"\makecell{" + r"\\".join(bold) + "}")
+
+
+def _spans_two_header_rows(content: NoEscape) -> str:
+    """Header cell set in the second header row and centred across both."""
+    return dumps(MultiRow(NoEscape("-2"), width="*", data=content))
+
+
 def _vehicle_live_load_table(input_dict) -> str:
     """Vehicles ticked in Additional Inputs > Loading, one row each."""
+    # The two header rows share the Vehicle, load, impact and centrifugal
+    # cells; only the braking group is split, so the hhline rule is drawn
+    # under columns 4-6 and in the header colour elsewhere.
+    braking = MultiColumn(3, align="c|", data=_head("Braking Load (IRC 6 Cl. 211)"))
+    hidden = r">{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}"
+    header = "\n".join([
+        r"\tableheader & & & " + dumps(braking) + r" & \\",
+        r"\hhline{|" + "|".join([hidden] * 3 + ["-"] * 3 + [hidden]) + "|}",
+        r"\tableheadernext " + " & ".join([
+            _spans_two_header_rows(_head("Vehicle")),
+            _spans_two_header_rows(_head("Total Load", "(kN)")),
+            _spans_two_header_rows(_head("Impact", "Factor")),
+            _head("Considered?"),
+            _head("Value", "(kN)"),
+            _head("Eccentricity", "(m)"),
+            _spans_two_header_rows(_head("Centrifugal", "Force (kN)")),
+        ]) + r" \\",
+    ])
+    table = longtable("|L{2.6cm}|C{2.1cm}|C{1.5cm}|C{2.15cm}|C{1.5cm}|C{2.2cm}|C{2.15cm}|",
+                      header, caption="Vehicular Live Load (LL)", label="tab:vehicle-live-load",
+                      col_sep=TABLE.col_sep_dense)
     rows = vehicle_rows(input_dict)
-    body = [
-        _tex(v.name)
-        + " & " + _num(v.total_load_kN, 1)
-        + " & " + _num(v.impact_factor, 3)
-        + " & " + ("Yes" if v.braking_considered else "No")
-        + " & " + _num(v.braking_kN, 1)
-        + " & " + _num(v.braking_eccentricity_m, 2)
-        + " & " + _num(v.centrifugal_kN, 1)
-        + r" \\[\rowpad]" + "\n\\hline"
-        for v in rows
-    ] or [r"\multicolumn{7}{|l|}{No vehicle is selected in Additional Inputs $>$ Loading.} \\[\rowpad]" + "\n\\hline"]
+    for v in rows:
+        add_row(table, _tex(v.name), _num(v.total_load_kN, 1), _num(v.impact_factor, 3),
+                "Yes" if v.braking_considered else "No", _num(v.braking_kN, 1),
+                _num(v.braking_eccentricity_m, 2), _num(v.centrifugal_kN, 1))
+    if not rows:
+        add_row(table, MultiColumn(7, align="|l|",
+                                   data=NoEscape(r"No vehicle is selected in Additional Inputs $>$ Loading.")))
 
     dla = analysis_impact_factor(input_dict)
     dla_note = (f" The grillage analysis currently applies the Cl. 208.3 tracked-vehicle factor, "
                 f"{dla:.3f}, to every vehicle load case." if dla is not None else "")
-    # The two header rows share the Vehicle, load, impact and centrifugal
-    # cells; only the braking group is split, so the hhline rule is drawn
-    # under columns 4-6 and in the header colour elsewhere.
-    header = r"""\tableheader & & & \multicolumn{3}{c|}{\textbf{Braking Load (IRC 6 Cl. 211)}} & \\
-\hhline{|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|-|-|-|>{\arrayrulecolor{tableHeader}}->{\arrayrulecolor{black}}|}
-\tableheadernext \multirow{-2}{*}{\textbf{Vehicle}}
-& \multirow{-2}{*}{\makecell{\textbf{Total Load}\\\textbf{(kN)}}}
-& \multirow{-2}{*}{\makecell{\textbf{Impact}\\\textbf{Factor}}}
-& \textbf{Considered?}
-& \makecell{\textbf{Value}\\\textbf{(kN)}}
-& \makecell{\textbf{Eccentricity}\\\textbf{(m)}}
-& \multirow{-2}{*}{\makecell{\textbf{Centrifugal}\\\textbf{Force (kN)}}} \\"""
     return (
         "\\begingroup\n\\tablesmallfont\n\\setlength{\\tabcolsep}{\\colsepdense}\n"
-        + longtable_begin("|L{2.6cm}|C{2.1cm}|C{1.5cm}|C{2.15cm}|C{1.5cm}|C{2.2cm}|C{2.15cm}|",
-                          header, caption="Vehicular Live Load (LL)", label="tab:vehicle-live-load",
-                          col_sep=TABLE.col_sep_dense)
-        + "\n".join(body) + "\n\\end{longtable}\n\\endgroup\n"
+        + dumps(table) + "\n\\endgroup\n"
         # The note is kept in one piece so it never runs onto the next page.
         + r"\par\noindent\begin{minipage}{\linewidth}\textit{Note: Vehicles are those selected in Additional Inputs $>$ Loading. "
         r"Impact factor $=$~\mbox{$1 + \mathit{IM}$} for the span, IRC 6 Cl.~208.2 for Class A and wheeled custom "
@@ -132,7 +147,11 @@ def _footpath_live_load_table(input_dict) -> str:
          _num(fp.pressure_kN_m2, 3) if has_footpath else "Not applied",
          r"kN/m\textsuperscript{2}" if has_footpath else "---"),
     ]
-    body = "\n".join(f"{p} & {v} & {u}" + r" \\[\rowpad]" + "\n\\hline" for p, v, u in rows)
+    table = longtable("|L{5.5cm}|L{6.5cm}|C{2.5cm}|",
+                      r"\tableheader " + " & ".join([_head("Parameter"), _head("Value"), _head("Unit")]) + r" \\",
+                      caption="Footpath Live Load", label="tab:footpath-live-load")
+    for row in rows:
+        add_row(table, *row)
     if not has_footpath:
         note = "No footpath is provided, so no footpath live load is applied."
     elif fp.mode.strip().lower() in ("as per irc 6", "as per irc6", "automatic"):
@@ -140,13 +159,7 @@ def _footpath_live_load_table(input_dict) -> str:
                 "Cl. 206.1 load for the default footway type.")
     else:
         note = "Footpath pressure acts on the footway area only; the value is user-defined."
-    return (
-        longtable_begin("|L{5.5cm}|L{6.5cm}|C{2.5cm}|",
-                        r"\tableheader \textbf{Parameter} & \textbf{Value} & \textbf{Unit} \\",
-                        caption="Footpath Live Load", label="tab:footpath-live-load")
-        + body + "\n\\end{longtable}\n"
-        + r"\noindent\textit{Note: " + note + "}"
-    )
+    return dumps(table) + "\n" + r"\noindent\textit{Note: " + note + "}"
 
 
 def ch3_loads(input_dict):

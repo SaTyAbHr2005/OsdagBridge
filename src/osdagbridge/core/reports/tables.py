@@ -1,17 +1,22 @@
 """
-Opening block for the report's multi-page tables.
+The report's multi-page tables, built as PyLaTeX ``LongTable`` objects.
 
-Every longtable in the report starts with ``longtable_begin()``. It writes the
-caption and header for the first page, repeats them under a "(continued)"
-caption on every following page (``\\endfirsthead`` / ``\\endhead``), closes
-each broken page with a "Continued on next page" line (``\\endfoot``), and
-narrows the column widths when the table would otherwise run past the text
-block defined in ``styles.PAGE``.
+``longtable()`` returns a ``LongTable`` that writes the caption and header for
+the first page, repeats them under a "(continued)" caption on every following
+page (``\\endfirsthead`` / ``end_table_header()``), closes each broken page
+with a "Continued on next page" line (``end_table_footer()``), and narrows the
+column widths when the table would otherwise run past the text block defined
+in ``styles.PAGE``. Rows go in with ``add_row()``.
 
-The chapter supplies the body rows and the closing ``\\end{longtable}``.
+Most chapters still write their rows as LaTeX text; ``longtable_begin()``
+gives them the same PyLaTeX table up to ``\\endlastfoot``, and the chapter
+adds the rows and the closing ``\\end{longtable}``.
 """
 
 import re
+
+from pylatex import Command, LongTable, MultiColumn, NoEscape
+from pylatex import config as pylatex_config
 
 from .styles import TABLE, length_cm, text_width_cm
 
@@ -21,8 +26,15 @@ _WIDTH = re.compile(r"([pmbLCR])\{([\d.]+)cm\}")
 # >{...}, <{...} and @{...} decorate a column without adding one.
 _DECORATION = re.compile(r"[<>@]\{(?:[^{}]|\{[^{}]*\})*\}")
 _COLUMN = re.compile(r"[pmbLCR]\{[^{}]*\}|[lcr]")
-# A full rule right after a row end, past an optional [gap] argument.
-_RULE_AFTER_ROW = re.compile(r"(?:\[[^\]]*\])?\s*(\\hline)(?![a-zA-Z])")
+# A full rule right after a row end, past an optional [gap] argument and the
+# "%" line ends PyLaTeX writes.
+_RULE_AFTER_ROW = re.compile(r"(?:\[[^\]]*\])?[\s%]*(\\hline)(?![a-zA-Z])")
+
+
+def dumps(obj) -> str:
+    """LaTeX source of a PyLaTeX object, without the indent PyLaTeX adds inside environments."""
+    with pylatex_config.active.change(indent=False):
+        return obj.dumps()
 
 
 def count_columns(spec: str) -> int:
@@ -117,9 +129,9 @@ def keep_rows_together(tex: str) -> str:
     return "".join(out)
 
 
-def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
-                    col_sep: str = TABLE.col_sep) -> str:
-    """LaTeX from ``\\begin{longtable}`` down to ``\\endlastfoot``.
+def longtable(spec: str, header: str, caption: str = "", label: str = "",
+              col_sep: str = TABLE.col_sep) -> LongTable:
+    """PyLaTeX LongTable with its caption, header and page-break foot in place.
 
     spec     column specification without the outer braces
     header   header row(s), each ending in ``\\\\``; may span several rows
@@ -131,7 +143,7 @@ def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
     # A bare p{} column justifies its text, which leaves wide gaps in narrow
     # cells; set it ragged right like the L columns.
     spec = fit_to_text_width(re.sub(r"(?<=\|)p\{", "L{", spec), col_sep)
-    head = "\\hline\n" + header.strip() + "\n\\hline\n"
+    head = "\\hline\n" + header.strip() + "\n\\hline"
 
     if caption:
         # The optional argument keeps the List of Tables entry in plain type.
@@ -146,11 +158,33 @@ def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
         repeat_caption = (r"\multicolumn{" + str(n_cols) + r"}{l}{\textit{"
                           + TABLE.continued_caption + "}}\\\\\n")
 
-    return (
-        r"\begin{longtable}{" + spec + "}\n"
-        + first_caption + head + "\\endfirsthead\n"
-        + repeat_caption + head + "\\endhead\n"
-        + r"\multicolumn{" + str(n_cols) + r"}{r}{\tablecontinuednote}\\" + "\n"
-        + "\\endfoot\n"
-        + "\\endlastfoot\n"
-    )
+    table = LongTable(NoEscape(spec), width=n_cols)
+    table.append(NoEscape(first_caption + head))
+    table.append(Command("endfirsthead"))
+    table.append(NoEscape(repeat_caption + head))
+    table.end_table_header()
+    continued = MultiColumn(n_cols, align="r", data=NoEscape(r"\tablecontinuednote"))
+    table.append(NoEscape(dumps(continued) + r"\\"))
+    table.end_table_footer()
+    table.end_table_last_footer()
+    return table
+
+
+def add_row(table: LongTable, *cells) -> None:
+    """Add one body row with the report's row padding and a rule under it.
+
+    cells  LaTeX text (already escaped) or PyLaTeX objects such as MultiColumn
+    """
+    row = " & ".join(cell if isinstance(cell, str) else dumps(cell) for cell in cells)
+    table.append(NoEscape(row + r" \\[\rowpad]"))
+    table.add_hline()
+
+
+def longtable_begin(spec: str, header: str, caption: str = "", label: str = "",
+                    col_sep: str = TABLE.col_sep) -> str:
+    """LaTeX of ``longtable()`` from ``\\begin{longtable}`` down to ``\\endlastfoot``,
+    for chapters that write their body rows as LaTeX text and close the table
+    themselves. Arguments as for ``longtable()``.
+    """
+    tex = dumps(longtable(spec, header, caption, label, col_sep))
+    return tex[:tex.rindex(r"\end{longtable}")]
