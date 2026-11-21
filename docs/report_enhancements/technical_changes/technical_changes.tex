@@ -203,10 +203,12 @@ The finished report was read page by page at normal screen zoom. Each fix below 
 
 \begin{itemize}
   \item \textit{Rules of different weights.} longtable draws every \code{\hline} twice, one copy on each side of a possible page break, and the overlapping copies rendered darker than the other rules. \code{styles.py} redefines the longtable rule so it is drawn once. The header fill also stops one rule width short of the rules, because colortbl paints a cell's fill after the rules beside it. All rules are 0.75\,pt.
-  \item \textit{Half-empty pages.} Five forced page breaks in Chapters 2, 5 and 8 were removed.
+  \item \textit{Half-empty pages.} Six forced page breaks in the executive summary and Chapters 2, 5 and 8 were removed. The one after Figure~1 left most of a page blank whenever a longer summary pushed Figure~1 onto the second page.
+  \item \textit{Headings left at the foot of a page.} When a heading was followed by a long table whose first rows did not fit, longtable broke the page under the heading. LaTeX flags the spot after a heading, but the first paragraph in a table cell clears that flag before longtable checks the space, so \code{styles.py} records the flag when the table begins. After a heading the table start then adds no break point, and when the first rows do not fit the break moves above the heading. The \code{\label} written after a heading also gets a \code{\nobreak}, because the space after it was a legal break point too.
   \item \textit{Header words overflowing their columns.} The L, C and R column types start with \code{\hspace{0pt}}, which lets a long first word hyphenate.
   \item \textit{Drawings far from their captions.} The six section views in Chapter~6 are cropped to the drawing and capped at 3.5\,cm high.
-  \item \textit{Smaller fixes.} The vehicle load note keeps ``1 + IM'' together, page numbers are roman for the front matter and ``Page $n$ of $N$'' from the executive summary, and Table~1 is fitted to the text width.
+  \item \textit{Blank Transverse Shear row.} The Transverse Shear (slab) row of the Overall Design Check Summary read girder check 16, which the designer moved to the deck design, so the row was always dashes (it is blank in Report\_Before too). It now reads $V_L$ and $V_{Rd}$ from the shear connector results, the same values as the Transverse Shear and Detailing table. The cross bracing slenderness row now says ``Geometry (KL/r)'' in the load combination column instead of a dash, since no load combination governs it.
+  \item \textit{Smaller fixes.} The vehicle load note keeps ``1 + IM'' together, page numbers are roman for the front matter and ``Page $n$ of $N$'' from the executive summary, Table~1 is fitted to the text width, and a utilization chart with more than six columns sets its column names smaller so they do not run together.
 \end{itemize}
 
 \subsection{Checked with other locations and settings}
@@ -229,11 +231,13 @@ Bagati, West Bengal & 30\,m, 15\,m (4 lanes, 7 girders) & footpaths on both side
 Jaipur, Rajasthan & 15\,m, 7.5\,m & footpath on one side; a custom three-axle vehicle \\
 Ludhiana, Punjab & 30\,m, 7.5\,m & Custom design mode \\
 Mumbai, Maharashtra & 30\,m, 7.5\,m & Preview build with Chapters 7 and 8 and the summary charts left out \\
+Bhubaneswar, Odisha & 35\,m, 11\,m (5 girders) & footpaths on both sides \\
+Balasore, Odisha & 40\,m, 15\,m (4 lanes, 7 girders) & median; footpath on one side; E~410A girders, E~300A cross bracing, E~350BR end diaphragms, M45 deck; rolled-beam end diaphragms for two pairs; user-defined footpath pressure of 4.0\,kN/m\textsuperscript{2}; a custom vehicle \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-All nine compiled without LaTeX errors or broken references. The location values (seismic zone and zone factor, wind speed, shade temperatures), the lane and girder counts, the footpath and median rows, the vehicle table with the custom vehicle and the span-dependent impact factors, the end diaphragm rows of the bill of materials, the design mode, and the chapter list of the preview all followed the inputs. The runs found five faults, now fixed: the bill of materials printed ``M40'' and ``Fe~500'' whatever grades were chosen, computed widths printed as 15.649999999999999, chart labels such as ``Compression'' were split mid-word, Table~1 ran over its column rules with seven girders, and girder pairs from G10 on would have been listed out of order.
+All eleven compiled without LaTeX errors or broken references. The location values (seismic zone and zone factor, wind speed, shade temperatures), the lane and girder counts, the footpath and median rows, the vehicle table with the custom vehicle and the span-dependent impact factors, the end diaphragm rows of the bill of materials, the design mode, and the chapter list of the preview all followed the inputs. The runs found seven faults, now fixed: the bill of materials printed ``M40'' and ``Fe~500'' whatever grades were chosen, computed widths printed as 15.649999999999999, chart labels such as ``Compression'' were split mid-word, Table~1 ran over its column rules with seven girders, girder pairs from G10 on would have been listed out of order, the Bhubaneswar summary left a half-empty page after Figure~1, and the Balasore report left the Section~5.5 heading alone at the foot of a page.
 
 \section{Files altered}
 
@@ -387,6 +391,8 @@ These are outside the report generator and were left for separate issues.
   \item With a 10\textdegree{} skew (40\,m span, five girders) the backend returned no grillage results, so Table~4.1 says no results are available.
   \item Changing the Footpath dropdown raises \code{AttributeError} in \code{input_dock.py}.
   \item The custom vehicle entry in the Loading tab is commented out in \file{ui_fields_additional_input.py}, so users cannot add custom vehicles yet. The report already lists them, as the Jaipur run shows.
+  \item The fatigue stress range in \file{designer.py} is the largest moment minus the smallest (taken as at most zero) over all SLS frequent combinations, and those include dead load. A constant dead load adds no stress range, but here it does, so every run reports a fatigue failure (UR 1.58 in the baseline, 3.07 at Balasore).
+  \item The optimizer can return a girder that fails its checks: at Balasore (40\,m span) the section under ``Final Bridge Geometry (after optimization)'' fails ULS shear with UR 1.73. The report prints these results as the design engine gives them.
 \end{enumerate}
 
 \section{Known limits}
