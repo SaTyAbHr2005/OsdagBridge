@@ -1063,7 +1063,8 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         if best is None:
             return ("---", "---", "---", None)
         ratio, sf, lim = best
-        return ("---", f"{sf:.1f}", f"{lim:.0f}", ratio)
+        # Slenderness KL/r depends on geometry only, so no load combination governs.
+        return ("Geometry (KL/r)", f"{sf:.1f}", f"{lim:.0f}", ratio)
 
     PG, DECK, CB, ED = SUMMARY_GROUPS
 
@@ -1138,6 +1139,15 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         (_dk_gov_wk / _wk_lim if (_dk_has and _wk_lim > 0) else None),
     )
 
+    # Transverse shear in the slab (IRC 22 Cl. 606.10) is checked with the shear
+    # connectors: V_L from the ULS design shear against the slab capacity V_Rd,
+    # the same values as the Transverse Shear and Detailing table.
+    try:
+        _ts_d, _ts_c = float(_ts_vl), float(_ts_vrd)
+        _ts_cells = ("ULS", _knm(_ts_d), _knm(_ts_c), _ts_d / _ts_c if _ts_c > 0 else None)
+    except (TypeError, ValueError):
+        _ts_cells = ("---", "---", "---", None)
+
     _overhang_label = r"Deck --- Cantilever Overhang"
     if _dk_has and not _dk_oh:
         _overhang_row = SummaryRow(DECK, _overhang_label, message="N/A (no cantilever overhang)")
@@ -1152,7 +1162,7 @@ Fatigue Shear Resistance, $Q_r$ & IRC 22 Table 8 ($\phi d$, $N_{sc}$) & """
         _summary(PG,   r"Girder --- Deflection",         _dcr_row({13, 14}, fallback_unit="mm")),
         _summary(PG,   r"Girder --- Stress",             _dcr_row({11}, fallback_unit="MPa")),
         _summary(PG,   r"Girder --- Fatigue",            _dcr_row({8, 9}, fallback_unit="MPa")),
-        _summary(DECK, r"Transverse Shear (slab)",       _dcr_row({16})),
+        _summary(DECK, r"Transverse Shear (slab)",       _ts_cells),
         _summary(DECK, r"Crack Width (slab)",            _crack_cells),
         _summary(DECK, r"Deck --- Flexure (sagging)",    _deck_row(KEY_DD_M_ULS_SAG, KEY_DD_MU_BOT, "kN-m/m")),
         _summary(DECK, r"Deck --- Flexure (hogging)",    _deck_row(KEY_DD_M_ULS_HOG, KEY_DD_MU_TOP, "kN-m/m")),

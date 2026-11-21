@@ -263,6 +263,33 @@ def latex_definitions() -> str:
   \multispan\LT@cols{{\CT@arc@\leaders\hrule\@height\arrayrulewidth\hfill}}\cr
   \noalign{{\osdag@LTbreak\global\let\osdag@LTbreak\osdag@LTbreak@default}}}}}}
 \makeatother
+% A heading must stay with the longtable under it. LaTeX marks the spot
+% right after a heading (\if@nobreak), but the first paragraph inside a
+% table cell clears that flag before longtable decides on its first page
+% break, so the flag is recorded when the table begins. After a heading the
+% table start adds no break point, and when the first rows do not fit,
+% the needed height is added as glue that takes itself back, so TeX breaks
+% before the heading instead of under it.
+\makeatletter
+\newif\ifosdag@afterhead
+\AtBeginEnvironment{{longtable}}{{\if@nobreak\global\osdag@afterheadtrue\else\global\osdag@afterheadfalse\fi}}
+\AtBeginDocument{{\apptocmd{{\label}}{{\ifvmode\if@nobreak\nobreak\fi\fi}}{{}}
+  {{\PackageWarning{{osdagbridge}}{{\string\label\space could not be patched}}}}}}
+\ExplSyntaxOn
+\patchcmd{{\LT@start}}{{\endgraf\penalty\z@}}
+  {{\endgraf\ifosdag@afterhead\nobreak\else\penalty\z@\fi}}{{}}
+  {{\PackageWarning{{osdagbridge}}{{longtable~start~break~could~not~be~patched}}}}
+\patchcmd{{\LT@start}}{{\vfil\break}}
+  {{\ifosdag@afterhead
+     \advance\dimen@\pagegoal\advance\dimen@-\pagetotal
+     \nobreak\vskip\dimen@\penalty9999\vskip-\dimen@
+   \else\vfil\break\fi}}{{}}
+  {{\PackageWarning{{osdagbridge}}{{longtable~page~check~could~not~be~patched}}}}
+\patchcmd{{\LT@start}}{{\ifvoid\LT@firsthead\copy\LT@head}}
+  {{\ifosdag@afterhead\nobreak\fi\ifvoid\LT@firsthead\copy\LT@head}}{{}}
+  {{\PackageWarning{{osdagbridge}}{{longtable~head~could~not~be~patched}}}}
+\ExplSyntaxOff
+\makeatother
 \newcommand{{\statuspass}}[1]{{\textcolor{{statusPass}}{{#1}}}}
 \newcommand{{\statusfail}}[1]{{\textcolor{{statusFail}}{{\textbf{{#1}}}}}}
 

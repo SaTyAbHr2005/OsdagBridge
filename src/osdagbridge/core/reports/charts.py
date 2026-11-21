@@ -67,6 +67,9 @@ def ur_bar_chart(items: Sequence[tuple[str, float]], path: str) -> Optional[str]
     ax.set_ylim(0, y_max)
     ax.set_ylabel("Utilization ratio (UR)", fontsize=CHART.font_size, color=text)
     ax.tick_params(labelsize=CHART.font_size, colors=text, length=0)
+    # Six columns' names fit at the full size; with more, the slots narrow and
+    # a word such as "Cantilever" cannot wrap, so the names shrink to match.
+    ax.tick_params(axis="x", labelsize=CHART.font_size * min(1.0, 6 / len(urs)))
     ax.yaxis.grid(True, color=_colour(CHART.grid), linewidth=0.6)
     _style_frame(ax)
 
