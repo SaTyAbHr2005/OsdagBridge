@@ -80,14 +80,14 @@ Pages & 56 & 63 \\
 Long tables that repeat their header on a new page & 2 of 49 & 51 of 51 \\
 Rows running into the footer & page 30 (G4 stiffener row) & none \\
 Charts & none & 5 (3 utilization, 2 material) \\
-Automated tests for the report & none & 39 \\
+Automated tests for the report & none & 47 \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
 The extra pages come from the List of Figures and List of Tables, the charts, the end diaphragm rows in the bill of materials, the design log chapter, and Table 5.1, which now gives each girder its own page instead of splitting a girder's rows across two pages.
 
-\paragraph{A note on PyLaTeX.} The task describes the changes in PyLaTeX terms. The generator in the repository does not use PyLaTeX: every chapter builds its LaTeX source as Python strings, and PyLaTeX is not a dependency of the project. The changes therefore use the LaTeX route the task allows for item~1 (\code{longtable} with \code{\endfirsthead} and \code{\endhead}) and the same LaTeX mechanisms for the other items. Section~\ref{sec:rationale} gives the reasons.
+\paragraph{PyLaTeX.} The original generator wrote all of its LaTeX as Python strings and did not use PyLaTeX. The tables and figures are now PyLaTeX objects, as the task asks: every long table is a PyLaTeX \code{LongTable} built by \code{tables.longtable()}, the two live load tables of item~3 are built cell by cell with \code{LongTable}, \code{MultiColumn} and \code{MultiRow}, and every figure and chart, including the charts of items~4 and~5, is a PyLaTeX \code{Figure}. \code{pylatex} is now declared in \file{pyproject.toml} and \file{environment.yml}. Section~\ref{sec:rationale} explains why the chapters' running text stays as LaTeX strings.
 
 \section{Key code and LaTeX changes}
 
@@ -95,7 +95,7 @@ The figures show the same part of the report before and after; page numbers are 
 
 \subsection{Item 1: Table headers repeat across page breaks}
 
-All 51 long tables now open with \code{longtable_begin()} in \code{tables.py}. It writes the caption and header for the first page (\code{\endfirsthead}), repeats both under a ``(continued)'' caption on every following page (\code{\endhead}), and ends each broken page with ``Continued on next page'' (\code{\endfoot}). It also narrows the column widths when a table would run past the text block; 45 of the old tables were wider than the page once the column gaps were counted. Tables grouped by girder or by bracing panel use \code{group_rows()}, which keeps a group on one page.
+All 51 long tables are now PyLaTeX \code{LongTable} objects built by \code{longtable()} in \code{tables.py}. It writes the caption and header for the first page (\code{\endfirsthead}), repeats both under a ``(continued)'' caption on every following page (\code{end_table_header()}, which writes \code{\endhead}), and ends each broken page with ``Continued on next page'' (\code{end_table_footer()}). Rows go in with \code{add_row()}; chapters that still write their rows as text take the same PyLaTeX table up to \code{\endlastfoot} from \code{longtable_begin()}. It also narrows the column widths when a table would run past the text block; 45 of the old tables were wider than the page once the column gaps were counted. Tables grouped by girder or by bracing panel use \code{group_rows()}, which keeps a group on one page.
 
 \begin{center}
 \compare{item1_before.png}{Report\_Before p.~31}{item1_after.png}{Report\_After p.~36}
@@ -121,7 +121,7 @@ On page 30 of the old report the footer rule sat about 6\,pt below the last line
 
 \subsection{Item 3: Vehicle and footpath live loads}
 
-\code{live_loads.py} builds the rows and \code{chap3.py} only formats them. The single mixed table became two.
+\code{live_loads.py} builds the rows and \code{chap3.py} only formats them. The single mixed table became two PyLaTeX tables: each is a \code{LongTable} from \code{longtable()} with one \code{add_row()} per vehicle or parameter, the braking group heading is a \code{MultiColumn} and the header cells that span both header rows are \code{MultiRow}s.
 
 The Vehicular Live Load table has one row per vehicle ticked in Additional Inputs > Loading, custom vehicles included, with columns for total load (kN), impact factor, braking load (considered or not, value in kN, eccentricity in m) and centrifugal force (kN). Impact factors follow IRC~6 Cl.~208.2 for Class~A and wheeled custom vehicles and Cl.~208.3 for Class~AA, 70R and tracked vehicles. Braking is 20\,\% of the first train (Cl.~211.2), applied at the eccentricity entered in the Loading tab; Class~SV braking follows its own checkbox. The Footpath Live Load table gives whether a footpath exists, its width, the pressure basis and the load in kN/m\textsuperscript{2}. \code{IRC6_2017.cl_208_3_impact_factor} gained an optional \code{tracked} argument so each vehicle gets its own factor; its default behaviour is unchanged.
 
@@ -143,7 +143,7 @@ The rows of the Overall Design Check Summary are now \code{SummaryRow} records w
 
 \subsection{Item 5: Material quantity charts in Chapter 7}
 
-The bill of materials had no end diaphragm rows. \code{boq_generator.end_diaphragm_quantities()} adds them as item 7: one diaphragm at each support of every girder pair, with chords and diagonals for cross-bracing diaphragms and one beam for rolled or welded ones. \code{charts.quantity_bar_chart()} then draws Figure 7.1, structural steel tonnage for girders, cross bracing and end diaphragms, and Figure 7.2, concrete volume (m\textsuperscript{3}) next to reinforcement weight (MT) in two panels with their own scales. Both charts are saved as PNG files in the report's temporary build folder, embedded with a LaTeX \code{figure} like the other figures, and deleted with that folder after compiling.
+The bill of materials had no end diaphragm rows. \code{boq_generator.end_diaphragm_quantities()} adds them as item 7: one diaphragm at each support of every girder pair, with chords and diagonals for cross-bracing diaphragms and one beam for rolled or welded ones. \code{charts.quantity_bar_chart()} then draws Figure 7.1, structural steel tonnage for girders, cross bracing and end diaphragms, and Figure 7.2, concrete volume (m\textsuperscript{3}) next to reinforcement weight (MT) in two panels with their own scales. Both charts are saved as PNG files in the report's temporary build folder, embedded as a PyLaTeX \code{Figure} by \code{report_utils._fig_embed()} like every other figure in the report, and deleted with that folder after compiling.
 
 \begin{center}
 \compare[0.62\textwidth]{item5_before.png}{Report\_Before p.~51}{item5_after.png}{Report\_After p.~57}
@@ -250,17 +250,18 @@ All paths are under \file{src/osdagbridge/} unless shown otherwise.
 File & Change \\
 \midrule
 \file{core/reports/styles.py} & New. Central style module (Section~\ref{sec:style}). \\
-\file{core/reports/tables.py} & New. \code{longtable_begin()}, \code{fit_to_text_width()}, \code{group_rows()}, \code{keep_rows_together()}. \\
+\file{core/reports/tables.py} & New. PyLaTeX \code{LongTable} builder \code{longtable()} with \code{add_row()} and \code{longtable_begin()}; \code{fit_to_text_width()}, \code{group_rows()}, \code{keep_rows_together()}. \\
 \file{core/reports/charts.py} & New. Utilization column charts and material quantity charts. \\
 \file{core/reports/live_loads.py} & New. Vehicle and footpath rows from the Loading tab. \\
 \file{core/reports/report_generator.py} & Preamble built from the style module, preview watermark, PDF properties, List of Figures and Tables, chapter selection, image cropping, page-break pass. \\
 \file{core/reports/executive_summary.py} & Critical Checks box, key outcomes computed from the results, readable check names, girder filter. \\
 \file{core/reports/chap2.py} to \code{chap8.py} & Tables through \code{longtable_begin()}, style names instead of literals, the live load tables, the UR and quantity charts, the defects listed in Section~\ref{sec:polish}. \\
-\file{core/reports/report_utils.py} & Numbered figure captions, $\le$ and $\ge$ in check names, rounding of floating-point noise. \\
+\file{core/reports/report_utils.py} & Figures built as PyLaTeX \code{Figure}s (also used by \code{chap6.py}), numbered figure captions, $\le$ and $\ge$ in check names, rounding of floating-point noise. \\
+\file{pyproject.toml}, \file{environment.yml} & \code{pylatex} declared as a dependency. \\
 \file{core/boq/boq_generator.py} & End diaphragm rows; crash barrier area accepted in m\textsuperscript{2} or mm\textsuperscript{2}. \\
 \file{core/utils/codes/irc6_2017.py} & Optional \code{tracked} argument for Cl.~208.3. \\
 \file{desktop/ui/dialogs/report_options.py} & Preview flag and a ``Summary charts'' item. \\
-\file{tests/unit/}, \file{tests/integration/} & New. 39 tests for the report (Section~\ref{sec:tests}). \\
+\file{tests/unit/}, \file{tests/integration/} & New. 47 tests for the report (Section~\ref{sec:tests}). \\
 \file{tools/build_sample_report.py} & New. Builds a report through the real application window. \\
 \bottomrule
 \end{tabularx}
@@ -327,7 +328,7 @@ Changing a margin, a colour or a row gap is a one-line edit in \code{styles.py}.
 \section{Rationale for the main choices}
 \label{sec:rationale}
 
-\paragraph{LaTeX strings instead of PyLaTeX.} The existing chapters, about 3\,300 lines, write LaTeX directly, and PyLaTeX is not installed in the project environment. Rewriting every chapter in PyLaTeX would have been a full rewrite of working code with a new dependency, and the task allows the longtable route for item~1. The new modules give the chapters the structure PyLaTeX would have given (one function opens every table, one module holds every style value) without changing how the report is produced.
+\paragraph{PyLaTeX objects inside the existing chapters.} PyLaTeX builds the parts the task names: the long tables, the live load tables and the figures. The chapters around them, about 3\,300 lines, still write their running text and most table rows as LaTeX strings, and the PyLaTeX objects are turned into LaTeX with \code{dumps()} where they sit. Rewriting every row of every chapter as PyLaTeX calls would have changed no output and risked the values the report prints. Because \code{longtable_begin()} hands chapters the opening of the same PyLaTeX \code{LongTable}, all 51 tables share one PyLaTeX definition of their caption, header and page-break foot. The LaTeX PyLaTeX writes was checked against the earlier output: the reports come out page for page the same.
 
 \paragraph{longtable for every multi-page table.} The preamble already loaded longtable, it works with colortbl and hhline, and its \code{\endfirsthead}/\code{\endhead}/\code{\endfoot} sections are exactly what item~1 asks for. Putting the opening in one function means all 51 tables get the same caption, header and ``continued'' behaviour.
 
@@ -367,7 +368,7 @@ Beyond the six items, these changes improve how the report reads:
 \section{Tests and how to reproduce the reports}
 \label{sec:tests}
 
-The 39 tests cover the style module, the table helper, the charts, the live load selection, the end diaphragm quantities, the executive summary and the design log. \file{tests/integration/test_report_latex.py} compiles a short document with the bundled pdflatex, using a project name full of characters LaTeX treats specially.
+The 47 tests cover the style module, the PyLaTeX tables and figures, the charts, the live load selection, the end diaphragm quantities, the executive summary and the design log. \file{tests/integration/test_report_latex.py} compiles a short document with the bundled pdflatex, using a project name full of characters LaTeX treats specially.
 
 \begin{lstlisting}
 python -m pytest tests
