@@ -345,8 +345,6 @@ This section provides a concise summary of the bridge design, key inputs, govern
 
 """ + plan_fig + r"""
 
-\newpage
-
 """ + cs_fig + '\n\n' + geom_fig + '\n\n' + table1 + r"""
 
 \vspace{\gapsmall}
